@@ -1,0 +1,32 @@
+services:
+  # Backend Service
+  - type: web
+    name: nice-interview-backend
+    env: node
+    region: oregon
+    plan: free
+    buildCommand: cd backend && npm install
+    startCommand: cd backend && npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: FRONTEND_URL
+        generateValue: true
+    healthCheckPath: /
+
+  # Frontend Service
+  - type: web
+    name: nice-interview-frontend
+    env: static
+    region: oregon
+    plan: free
+    buildCommand: cd frontend && npm install && npm run build
+    staticPublishPath: frontend/dist
+    envVars:
+      - key: VITE_BACKEND_URL
+        fromService:
+          type: web
+          name: nice-interview-backend
+          property: url
