@@ -206,8 +206,8 @@ Proprietary - NICE Company
 
 For technical support or questions:
 - Contact: IT Support Team
-- Email: support@nice.com
+- Email: prashant.borkar@gmail.com
 
 ---
 
-**Built with ❤️ for NICE Company**
+
