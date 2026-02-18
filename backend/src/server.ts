@@ -209,7 +209,7 @@ function analyzeDebugFixes(code: string, language: string): TestResult[] {
       });
 
       // Test 2: Check for Optional<User> variable declaration in testGetUserById
-      const hasOptionalTypeInTest = testMethodContent.includes('Optional<User>') && testMethodContent.match(/Optional<User>\s+\w+\s*=/);
+      const hasOptionalTypeInTest = testMethodContent.includes('Optional<User>') && testMethodContent.match(/Optional<User>\s+\w+\s*=/) !== null;
       results.push({
         name: 'Test 2 (BUG 2): Fix Result Type Declaration',
         passed: hasOptionalTypeInTest,
