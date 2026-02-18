@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { io, Socket } from 'socket.io-client';
-import { Copy, Plus, Eye, Clock, CheckCircle2, XCircle, Users, Terminal, AlertTriangle, Trophy, X } from 'lucide-react';
+import { Copy, Plus, Eye, Clock, CheckCircle2, Users, Terminal, AlertTriangle } from 'lucide-react';
 import { InterviewSession } from '../types';
 import CodeEditor from '../components/CodeEditor';
 

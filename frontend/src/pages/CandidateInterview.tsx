@@ -48,7 +48,7 @@ function CandidateInterview() {
   useEffect(() => {
     if (!sessionId) return;
 
-    const newSocket = io('http://localhost:5000');
+    const newSocket = io(import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000');
     setSocket(newSocket);
 
     newSocket.on('connect', () => {
@@ -190,7 +190,7 @@ function CandidateInterview() {
 
   // Block paste from external sources, allow internal copy-paste
   useEffect(() => {
-    const handleCopy = (e: ClipboardEvent) => {
+    const handleCopy = () => {
       // Track internal copy operations
       const selection = window.getSelection()?.toString();
       if (selection) {
