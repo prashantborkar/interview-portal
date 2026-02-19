@@ -11,6 +11,9 @@ interface SessionData {
   problemDescription: string;
   code: string;
   language: string;
+  isInstructionPhase?: boolean;
+  instructionTimeRemaining?: number;
+  codingTimeRemaining?: number;
 }
 
 function CandidateInterview() {
@@ -133,11 +136,11 @@ function CandidateInterview() {
         console.log('Restored timer phase:', data.isInstructionPhase ? 'Instruction' : 'Coding');
       }
       if (data.instructionTimeRemaining !== undefined) {
-        setInstructionTime(data.instructionTimeRemaining);
+        setInstructionTimeRemaining(data.instructionTimeRemaining);
         console.log('Restored instruction time:', data.instructionTimeRemaining);
       }
       if (data.codingTimeRemaining !== undefined) {
-        setCodingTime(data.codingTimeRemaining);
+        setCodingTimeRemaining(data.codingTimeRemaining);
         console.log('Restored coding time:', data.codingTimeRemaining);
       }
       
