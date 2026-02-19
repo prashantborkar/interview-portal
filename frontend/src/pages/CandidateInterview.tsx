@@ -294,6 +294,12 @@ function CandidateInterview() {
   };
 
   const handleLanguageChange = (newLanguage: string) => {
+    // If clicking the same tab, do nothing
+    if (language === newLanguage) {
+      console.log('Already on', newLanguage, '- no switch needed');
+      return;
+    }
+    
     console.log('=== SWITCHING CHALLENGE ===');
     console.log('From:', language, 'To:', newLanguage);
     console.log('Existing challenges:', Object.keys(challengeCode));
@@ -546,10 +552,10 @@ class User {
 }
 
 // EXPECTED FIX:
-// 1. when(...).thenReturn(Optional.of(mockUser))
-// 2. Optional<User> result = userService.getUserById(1L)
-// 3. assertTrue(result.isPresent())
-// 4. assertEquals("John Doe", result.get().getName())`;
+// 1. Wrap mock return in Optional
+// 2. Change result type to Optional
+// 3. Check if Optional has value before accessing
+// 4. Use Optional method to get value`;
         break;
 
       case 'springboot-test':
@@ -617,10 +623,10 @@ class Product {
 }
 
 // EXPECTED FIX:
-// 1. Add MockitoAnnotations.openMocks(this) in setup()
-// 2. Change mock: when(productRepository.findByActiveTrue())
-// 3. Return only active products: Arrays.asList(p1, p2)
-// 4. Verify correct method: verify(productRepository).findByActiveTrue()`;
+// 1. Initialize mocks in setup method
+// 2. Mock the correct repository method for active products
+// 3. Return only active products (2 items)
+// 4. Verify the correct method was called`;
         break;
 
       default:
