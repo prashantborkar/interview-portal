@@ -140,7 +140,7 @@ function CandidateInterview() {
         console.log('Restored instruction time:', data.instructionTimeRemaining);
       }
       if (data.codingTimeRemaining !== undefined) {
-        setCodingTimeRemaining(data.codingTimeRemaining);
+        setTimeRemaining(data.codingTimeRemaining);
         console.log('Restored coding time:', data.codingTimeRemaining);
       }
       
