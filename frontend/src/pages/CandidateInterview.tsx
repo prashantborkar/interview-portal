@@ -60,6 +60,41 @@ function CandidateInterview() {
   // Clean up invalid challenges on mount (only 3 Selenium challenges allowed)
   useEffect(() => {
     const validChallenges = ['selenium-pageobject', 'selenium-waits', 'selenium-locators'];
+    
+    // Restore challengeCode from localStorage on mount (for page refresh)
+    if (sessionId) {
+      const savedChallengeCode = localStorage.getItem(`challengeCode_${sessionId}`);
+      if (savedChallengeCode) {
+        try {
+          const parsed = JSON.parse(savedChallengeCode);
+          console.log('Restored challenge code from localStorage:', Object.keys(parsed));
+          setChallengeCode(parsed);
+        } catch (e) {
+          console.error('Failed to parse saved challenge code:', e);
+        }
+      }
+      
+      // Restore test results from localStorage
+      const savedBugResults = localStorage.getItem(`bugResults_${sessionId}`);
+      if (savedBugResults) {
+        try {
+          const parsed = JSON.parse(savedBugResults);
+          console.log('Restored bug results from localStorage');
+          setBugResults(parsed);
+        } catch (e) {
+          console.error('Failed to parse saved bug results:', e);
+        }
+      }
+      
+      // Restore total points from localStorage
+      const savedTotalPoints = localStorage.getItem(`totalPoints_${sessionId}`);
+      if (savedTotalPoints) {
+        const points = parseFloat(savedTotalPoints);
+        console.log('Restored total points from localStorage:', points);
+        setTotalPoints(points);
+      }
+    }
+    
     setChallengeCode(prev => {
       const cleaned: { [key: string]: string } = {};
       Object.keys(prev).forEach(key => {
@@ -72,7 +107,7 @@ function CandidateInterview() {
       }
       return cleaned;
     });
-  }, []);
+  }, [sessionId]);
 
   useEffect(() => {
     if (!sessionId) return;
@@ -91,6 +126,20 @@ function CandidateInterview() {
       // Set the language first
       const currentLanguage = data.language || 'selenium-pageobject';
       setLanguage(currentLanguage);
+      
+      // Restore timer state from server (handle page refresh)
+      if (data.isInstructionPhase !== undefined) {
+        setIsInstructionPhase(data.isInstructionPhase);
+        console.log('Restored timer phase:', data.isInstructionPhase ? 'Instruction' : 'Coding');
+      }
+      if (data.instructionTimeRemaining !== undefined) {
+        setInstructionTime(data.instructionTimeRemaining);
+        console.log('Restored instruction time:', data.instructionTimeRemaining);
+      }
+      if (data.codingTimeRemaining !== undefined) {
+        setCodingTime(data.codingTimeRemaining);
+        console.log('Restored coding time:', data.codingTimeRemaining);
+      }
       
       // Check if session has existing code (from previous work or interviewer edits)
       if (data.code && data.code !== '// Select a debugging challenge from the dropdown above') {
@@ -167,6 +216,12 @@ function CandidateInterview() {
           // Cap at 10 points maximum
           const cappedTotal = Math.min(total, 10);
           setTotalPoints(cappedTotal);
+          
+          // Persist test results to localStorage
+          if (sessionId) {
+            localStorage.setItem(`bugResults_${sessionId}`, JSON.stringify(updatedResults));
+            localStorage.setItem(`totalPoints_${sessionId}`, cappedTotal.toString());
+          }
           
           return updatedResults;
         });
@@ -298,10 +353,17 @@ function CandidateInterview() {
   const handleCodeChange = (newCode: string) => {
     setCode(newCode);
     // Save code for current challenge
-    setChallengeCode(prev => ({
-      ...prev,
+    const updated = {
+      ...challengeCode,
       [language]: newCode
-    }));
+    };
+    setChallengeCode(updated);
+    
+    // Persist to localStorage for page refresh
+    if (sessionId) {
+      localStorage.setItem(`challengeCode_${sessionId}`, JSON.stringify(updated));
+    }
+    
     if (socket && sessionId) {
       console.log('Sending code update:', newCode.substring(0, 50));
       socket.emit('code-change', { sessionId, code: newCode, language });

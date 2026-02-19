@@ -40,6 +40,7 @@ function InterviewerDashboard() {
   const [pasteAlerts, setPasteAlerts] = useState<PasteAlert[]>([]);
   const [testResults, setTestResults] = useState<TestResults | null>(null);
   const [showResultsModal, setShowResultsModal] = useState(false);
+  const [forceUpdateCounter, setForceUpdateCounter] = useState(0); // Force re-render when tab becomes active
 
   useEffect(() => {
     const newSocket = io(import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000');
@@ -132,9 +133,11 @@ function InterviewerDashboard() {
     // Handle tab visibility to prevent timer from getting stuck
     const handleVisibilityChange = () => {
       if (!document.hidden) {
-        console.log('Tab became active - refreshing connection');
-        // Force a state refresh when tab becomes visible
-        setSessions(prev => [...prev]);
+        console.log('Tab became active - forcing UI refresh');
+        // Force a complete re-render by updating counter
+        setForceUpdateCounter(prev => prev + 1);
+        // Also refresh sessions data
+        setSessions(prev => prev.map(s => ({ ...s, lastUpdate: Date.now() })));
       }
     };
 
@@ -274,7 +277,7 @@ function InterviewerDashboard() {
               ) : (
                 sessions.map(session => (
                   <div
-                    key={session.id}
+                    key={`${session.id}-${forceUpdateCounter}-${session.lastUpdate || 0}`}
                     className={`p-4 rounded-lg border-2 cursor-pointer transition-all duration-200 ${
                       selectedSession?.id === session.id
                         ? 'border-nice-blue bg-nice-sky'

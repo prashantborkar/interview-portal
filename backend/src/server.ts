@@ -327,9 +327,19 @@ public class LoginPage {
     
     socket.join(sessionId);
     session.status = 'active';
-    socket.emit('session-data', session);
+    // Include timer state for resume after refresh
+    socket.emit('session-data', {
+      ...session,
+      isInstructionPhase: session.isInstructionPhase ?? true,
+      instructionTimeRemaining: session.instructionTimeRemaining ?? 60,
+      codingTimeRemaining: session.codingTimeRemaining ?? 900
+    });
     io.emit('sessions-list', Array.from(sessions.values()));
-    console.log('Candidate joined session:', sessionId);
+    console.log('Candidate joined/rejoined session:', sessionId, '- Timer:', {
+      phase: session.isInstructionPhase ? 'Instruction' : 'Coding',
+      instructionTime: session.instructionTimeRemaining,
+      codingTime: session.codingTimeRemaining
+    });
   });
 
   socket.on('code-change', ({ sessionId, code, language }: { sessionId: string; code: string; language?: string }) => {
