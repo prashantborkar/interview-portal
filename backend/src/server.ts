@@ -437,7 +437,8 @@ public class LoginPage {
       if (language) {
         session.language = language;
       }
-      io.emit('code-update', { sessionId, code, language: session.language });
+      // Broadcast to all clients EXCEPT the sender to prevent cursor jumping
+      socket.broadcast.emit('code-update', { sessionId, code, language: session.language });
     }
   });
 
@@ -446,7 +447,8 @@ public class LoginPage {
     
     if (session) {
       session.language = language;
-      io.emit('language-update', { sessionId, language });
+      // Broadcast to all clients EXCEPT the sender
+      socket.broadcast.emit('language-update', { sessionId, language });
     }
   });
 
