@@ -50,6 +50,7 @@ function CandidateInterview() {
   const [isTestSubmitted, setIsTestSubmitted] = useState(false);
   const [completedChallenges, setCompletedChallenges] = useState<Set<string>>(new Set());
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const isSwitchingChallenge = useRef<boolean>(false); // Prevent onChange during switch
   
   // Individual bug tracking
   interface BugResult {
@@ -70,10 +71,18 @@ function CandidateInterview() {
       if (savedChallengeCode) {
         try {
           const parsed = JSON.parse(savedChallengeCode);
-          console.log('Restored challenge code from localStorage:', Object.keys(parsed));
-          setChallengeCode(parsed);
+          // Only restore if it has valid challenges
+          const validKeys = Object.keys(parsed).filter(k => validChallenges.includes(k));
+          if (validKeys.length > 0) {
+            console.log('Restored challenge code from localStorage:', validKeys);
+            setChallengeCode(parsed);
+          } else {
+            console.log('No valid challenge code in localStorage, starting fresh');
+            localStorage.removeItem(`challengeCode_${sessionId}`);
+          }
         } catch (e) {
           console.error('Failed to parse saved challenge code:', e);
+          localStorage.removeItem(`challengeCode_${sessionId}`);
         }
       }
       
@@ -86,6 +95,7 @@ function CandidateInterview() {
           setBugResults(parsed);
         } catch (e) {
           console.error('Failed to parse saved bug results:', e);
+          localStorage.removeItem(`bugResults_${sessionId}`);
         }
       }
       
@@ -97,19 +107,6 @@ function CandidateInterview() {
         setTotalPoints(points);
       }
     }
-    
-    setChallengeCode(prev => {
-      const cleaned: { [key: string]: string } = {};
-      Object.keys(prev).forEach(key => {
-        if (validChallenges.includes(key)) {
-          cleaned[key] = prev[key];
-        }
-      });
-      if (Object.keys(cleaned).length !== Object.keys(prev).length) {
-        console.log('Cleaned invalid challenges from state');
-      }
-      return cleaned;
-    });
   }, [sessionId]);
 
   useEffect(() => {
@@ -149,15 +146,65 @@ function CandidateInterview() {
         // Load existing code from session (persisted state)
         setCode(data.code);
       } else {
-        // New session - load the debugging challenge
-        setTimeout(() => {
-          // Get the buggy code for this challenge
-          const event = { target: { value: currentLanguage } } as React.ChangeEvent<HTMLSelectElement>;
-          const changeHandler = (e: React.ChangeEvent<HTMLSelectElement>) => {
-            handleLanguageChange(e.target.value);
-          };
-          changeHandler(event);
-        }, 100);
+        // New session - load the starter code for default language immediately
+        console.log('New session - loading starter code for:', currentLanguage);
+        
+        // For first load, directly call the code load logic without early return check
+        const starterCode = currentLanguage === 'selenium-pageobject' ? `// DEBUGGING CHALLENGE: Page Object Pattern Bug
+// SCENARIO: Login page automation is failing intermittently
+// ISSUE: Tests fail with "Element not found" even though element exists
+// YOUR TASK: Fix the bug(s) in this Page Object implementation
+
+import org.openqa.selenium.By;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
+import org.openqa.selenium.support.ui.WebDriverWait;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import java.time.Duration;
+
+public class LoginPage {
+    private WebDriver driver;
+    private WebDriverWait wait;
+    
+    // Locators
+    private By usernameField = By.id("username");
+    private By passwordField = By.id("password");
+    private By loginButton = By.xpath("//button[@type='submit']");
+    private By errorMessage = By.className("error-msg");
+    
+    public LoginPage(WebDriver driver) {
+        this.driver = driver;
+        // BUG 1: Missing WebDriverWait initialization
+    }
+    
+    // BUG 2: This method doesn't wait for page to load
+    public void login(String username, String password) {
+        driver.findElement(usernameField).sendKeys(username);
+        driver.findElement(passwordField).sendKeys(password);
+        driver.findElement(loginButton).click();
+    }
+    
+    // BUG 3: No wait condition for error message
+    public String getErrorMessage() {
+        return driver.findElement(errorMessage).getText();
+    }
+    
+    public boolean isLoginButtonDisplayed() {
+        return driver.findElement(loginButton).isDisplayed();
+    }
+}
+
+// EXPECTED FIX:
+// 1. Initialize WebDriverWait in constructor
+// 2. Add explicit waits in login() method
+// 3. Use ExpectedConditions.elementToBeClickable()
+// 4. Add wait for error message visibility` : '';
+        
+        setCode(starterCode);
+        setChallengeCode(prev => ({
+          ...prev,
+          [currentLanguage]: starterCode
+        }));
       }
     });
 
@@ -354,6 +401,12 @@ function CandidateInterview() {
   }, [socket, sessionId]);
 
   const handleCodeChange = (newCode: string) => {
+    // Don't save during challenge switch to prevent overwriting
+    if (isSwitchingChallenge.current) {
+      console.log('⏸️ Ignoring code change during challenge switch');
+      return;
+    }
+    
     setCode(newCode);
     // Save code for current challenge
     const updated = {
@@ -373,47 +426,27 @@ function CandidateInterview() {
     }
   };
 
-  const handleLanguageChange = (newLanguage: string) => {
-    // If clicking the same tab, do nothing
-    if (language === newLanguage) {
-      console.log('Already on', newLanguage, '- no switch needed');
+  // Helper function to load starter code for a challenge (without changing language state)
+  // Simple function to switch to a challenge and load its code
+  const switchToChallenge = (challengeName: string) => {
+    console.log('🔄 SWITCH TO:', challengeName, '(from:', language, ')');
+    
+    // Same tab? Do nothing
+    if (language === challengeName) {
       return;
     }
     
-    console.log('=== SWITCHING CHALLENGE ===');
-    console.log('From:', language, 'To:', newLanguage);
-    console.log('Existing challenges:', Object.keys(challengeCode));
+    // Block onChange temporarily
+    isSwitchingChallenge.current = true;
     
-    // Check if we already have code for this challenge
-    if (challengeCode[newLanguage]) {
-      console.log('Restoring saved code for', newLanguage);
-      console.log('Saved code length:', challengeCode[newLanguage].length);
-      // Restore previously written code - update both states immediately
-      setLanguage(newLanguage);
-      setCode(challengeCode[newLanguage]);
-      
-      if (socket && sessionId) {
-        socket.emit('language-change', { sessionId, language: newLanguage });
-        // Emit the saved code so interviewer sees it too
-        socket.emit('code-change', { sessionId, code: challengeCode[newLanguage], language: newLanguage });
-      }
-      return;
-    }
+    // Update language first
+    setLanguage(challengeName);
     
-    console.log('Loading fresh starter code for', newLanguage);
-    // First time loading this challenge - load starter code
-    setLanguage(newLanguage);
+    // Load the correct starter code based on challenge
+    let newCode = '';
     
-    // Emit language change to backend
-    if (socket && sessionId) {
-      socket.emit('language-change', { sessionId, language: newLanguage });
-    }
-
-    // Set debugging challenges with intentional bugs
-    let starterCode = '';
-    switch (newLanguage) {
-      case 'selenium-pageobject':
-        starterCode = `// DEBUGGING CHALLENGE: Page Object Pattern Bug
+    if (challengeName === 'selenium-pageobject') {
+      newCode = `// DEBUGGING CHALLENGE: Page Object Pattern Bug
 // SCENARIO: Login page automation is failing intermittently
 // ISSUE: Tests fail with "Element not found" even though element exists
 // YOUR TASK: Fix the bug(s) in this Page Object implementation
@@ -462,10 +495,8 @@ public class LoginPage {
 // 2. Add explicit waits in login() method
 // 3. Use ExpectedConditions.elementToBeClickable()
 // 4. Add wait for error message visibility`;
-        break;
-
-      case 'selenium-waits':
-        starterCode = `// DEBUGGING CHALLENGE: Wait Conditions Bug
+    } else if (challengeName === 'selenium-waits') {
+      newCode = `// DEBUGGING CHALLENGE: Wait Conditions Bug
 // SCENARIO: E-commerce cart page test failing randomly
 // ISSUE: Test tries to interact with elements before they're ready
 // YOUR TASK: Fix the wait strategy to make test stable
@@ -518,10 +549,8 @@ public class ShoppingCartTest {
 // 2. Use ExpectedConditions.elementToBeClickable() before clicking
 // 3. Wait for cart update using .textToBePresentInElement()
 // 4. Add presence wait for cart badge element`;
-        break;
-
-      case 'selenium-locators':
-        starterCode = `// DEBUGGING CHALLENGE: Locator Strategy Bug
+    } else if (challengeName === 'selenium-locators') {
+      newCode = `// DEBUGGING CHALLENGE: Locator Strategy Bug
 // SCENARIO: Form automation breaking after UI updates
 // ISSUE: Tests fail when developers change HTML structure
 // YOUR TASK: Fix fragile locators to be more robust
@@ -571,29 +600,23 @@ public class RegistrationFormPage {
 // - By.name("fullName"), By.name("email"), By.name("phoneNumber")
 // - By.cssSelector("[data-testid='submit-button']")
 // - Relative XPath: //input[@id='name'], //button[@type='submit']`;
-        break;
-
-      default:
-        starterCode = '// Select a debugging challenge from the dropdown above';
     }
     
-    // Update code in state and editor
-    setCode(starterCode);
-    console.log('Starter code loaded, length:', starterCode.length);
-    // Save starter code to challenge-specific storage
-    setChallengeCode(prev => {
-      const updated = {
-        ...prev,
-        [newLanguage]: starterCode
-      };
-      console.log('Saved challenges:', Object.keys(updated));
-      return updated;
-    });
+    console.log('✅ LOADED CODE LENGTH:', newCode.length, 'for', challengeName);
     
-    // Emit to backend so it syncs with interviewer
+    // Set the code immediately
+    setCode(newCode);
+    
+    // Notify backend
     if (socket && sessionId) {
-      socket.emit('code-change', { sessionId, code: starterCode, language: newLanguage });
+      socket.emit('language-change', { sessionId, language: challengeName });
+      socket.emit('code-change', { sessionId, code: newCode, language: challengeName });
     }
+    
+    // Re-enable onChange after short delay
+    setTimeout(() => {
+      isSwitchingChallenge.current = false;
+    }, 150);
   };
 
   const runCode = () => {
@@ -943,7 +966,7 @@ public class RegistrationFormPage {
                 </h3>
                 <div className="space-y-3 text-sm">
                   <div 
-                    onClick={() => !isInstructionPhase && handleLanguageChange('selenium-pageobject')}
+                    onClick={() => !isInstructionPhase && switchToChallenge('selenium-pageobject')}
                     className={`p-3 rounded border cursor-pointer transition-all hover:shadow-md ${
                     language === 'selenium-pageobject' ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-300' :
                     completedChallenges.has('selenium-pageobject') 
@@ -971,7 +994,7 @@ public class RegistrationFormPage {
                     )}
                   </div>
                   <div 
-                    onClick={() => !isInstructionPhase && handleLanguageChange('selenium-waits')}
+                    onClick={() => !isInstructionPhase && switchToChallenge('selenium-waits')}
                     className={`p-3 rounded border cursor-pointer transition-all hover:shadow-md ${
                     language === 'selenium-waits' ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-300' :
                     completedChallenges.has('selenium-waits') 
@@ -999,7 +1022,7 @@ public class RegistrationFormPage {
                     )}
                   </div>
                   <div 
-                    onClick={() => !isInstructionPhase && handleLanguageChange('selenium-locators')}
+                    onClick={() => !isInstructionPhase && switchToChallenge('selenium-locators')}
                     className={`p-3 rounded border cursor-pointer transition-all hover:shadow-md ${
                     language === 'selenium-locators' ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-300' :
                     completedChallenges.has('selenium-locators') 
@@ -1097,6 +1120,7 @@ public class RegistrationFormPage {
               </div>
               <div className="flex-1 min-h-0" ref={editorContainerRef}>
                 <CodeEditor
+                  key={language}
                   code={code}
                   onChange={handleCodeChange}
                   language={language}

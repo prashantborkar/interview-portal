@@ -52,6 +52,8 @@ function InterviewerDashboard() {
     });
 
     newSocket.on('sessions-list', (sessionsList: InterviewSession[]) => {
+      console.log('Sessions list received with', sessionsList.length, 'sessions');
+      // Sessions already have adjusted timer values from backend
       setSessions(sessionsList);
     });
 

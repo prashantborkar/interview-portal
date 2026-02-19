@@ -38,9 +38,39 @@ interface InterviewSession {
   isInstructionPhase?: boolean;
   instructionTimeRemaining?: number;
   codingTimeRemaining?: number;
+  lastTimerUpdate?: number; // Unix timestamp in milliseconds
 }
 
 const sessions: Map<string, InterviewSession> = new Map();
+
+// Helper function to calculate adjusted timer values based on elapsed time
+function getSessionWithAdjustedTimer(session: InterviewSession): InterviewSession {
+  if (!session.lastTimerUpdate) {
+    // No previous update, return as-is
+    return session;
+  }
+  
+  const elapsedSeconds = Math.floor((Date.now() - session.lastTimerUpdate) / 1000);
+  
+  if (elapsedSeconds <= 0) {
+    return session;
+  }
+  
+  let adjustedInstructionTime = session.instructionTimeRemaining ?? 60;
+  let adjustedCodingTime = session.codingTimeRemaining ?? 900;
+  
+  if (session.isInstructionPhase) {
+    adjustedInstructionTime = Math.max(0, (session.instructionTimeRemaining ?? 60) - elapsedSeconds);
+  } else {
+    adjustedCodingTime = Math.max(0, (session.codingTimeRemaining ?? 900) - elapsedSeconds);
+  }
+  
+  return {
+    ...session,
+    instructionTimeRemaining: adjustedInstructionTime,
+    codingTimeRemaining: adjustedCodingTime
+  };
+}
 
 // Test result interface
 interface TestResult {
@@ -234,7 +264,10 @@ io.on('connection', (socket) => {
   console.log('Client connected:', socket.id);
 
   socket.on('get-sessions', () => {
-    const sessionsList = Array.from(sessions.values());
+    // Calculate adjusted timer values for all sessions before sending
+    const sessionsList = Array.from(sessions.values()).map(session => 
+      getSessionWithAdjustedTimer(session)
+    );
     socket.emit('sessions-list', sessionsList);
   });
 
@@ -327,18 +360,47 @@ public class LoginPage {
     
     socket.join(sessionId);
     session.status = 'active';
+    
+    // Calculate elapsed time since last update to properly resume timer
+    let adjustedInstructionTime = session.instructionTimeRemaining ?? 60;
+    let adjustedCodingTime = session.codingTimeRemaining ?? 900;
+    
+    if (session.lastTimerUpdate) {
+      const elapsedSeconds = Math.floor((Date.now() - session.lastTimerUpdate) / 1000);
+      console.log('Time elapsed since last update:', elapsedSeconds, 'seconds');
+      
+      if (session.isInstructionPhase) {
+        adjustedInstructionTime = Math.max(0, (session.instructionTimeRemaining ?? 60) - elapsedSeconds);
+        console.log('Adjusted instruction time:', adjustedInstructionTime);
+      } else {
+        adjustedCodingTime = Math.max(0, (session.codingTimeRemaining ?? 900) - elapsedSeconds);
+        console.log('Adjusted coding time:', adjustedCodingTime);
+      }
+    }
+    
+    // Update session with adjusted times
+    session.instructionTimeRemaining = adjustedInstructionTime;
+    session.codingTimeRemaining = adjustedCodingTime;
+    session.lastTimerUpdate = Date.now();
+    
     // Include timer state for resume after refresh
     socket.emit('session-data', {
       ...session,
       isInstructionPhase: session.isInstructionPhase ?? true,
-      instructionTimeRemaining: session.instructionTimeRemaining ?? 60,
-      codingTimeRemaining: session.codingTimeRemaining ?? 900
+      instructionTimeRemaining: adjustedInstructionTime,
+      codingTimeRemaining: adjustedCodingTime
     });
-    io.emit('sessions-list', Array.from(sessions.values()));
+    
+    // Broadcast updated sessions list with adjusted timers to all clients
+    const sessionsList = Array.from(sessions.values()).map(s => 
+      getSessionWithAdjustedTimer(s)
+    );
+    io.emit('sessions-list', sessionsList);
+    
     console.log('Candidate joined/rejoined session:', sessionId, '- Timer:', {
       phase: session.isInstructionPhase ? 'Instruction' : 'Coding',
-      instructionTime: session.instructionTimeRemaining,
-      codingTime: session.codingTimeRemaining
+      instructionTime: adjustedInstructionTime,
+      codingTime: adjustedCodingTime
     });
   });
 
@@ -377,6 +439,7 @@ public class LoginPage {
       session.isInstructionPhase = isInstructionPhase;
       session.instructionTimeRemaining = instructionTimeRemaining;
       session.codingTimeRemaining = codingTimeRemaining;
+      session.lastTimerUpdate = Date.now(); // Save timestamp for resume calculation
       
       // Broadcast timer update to all clients (especially interviewer)
       io.emit('timer-update', { 
