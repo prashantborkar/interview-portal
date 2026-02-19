@@ -172,18 +172,14 @@ function CandidateInterview() {
   useEffect(() => {
     if (isTestSubmitted) return;
     
-    let tickCount = 0; // Track ticks for throttled updates
-    
     timerRef.current = setInterval(() => {
-      tickCount++;
-      
       if (isInstructionPhase) {
         // Instruction phase: countdown from 1 minute
         setInstructionTimeRemaining(prev => {
           const newTime = prev <= 1 ? 0 : prev - 1;
           
-          // Broadcast timer update to interviewer every 5 seconds (or on critical moments)
-          if (socket && sessionId && (tickCount % 5 === 0 || newTime <= 10 || newTime === 0)) {
+          // Broadcast timer update to interviewer - more frequently during instruction
+          if (socket && sessionId) {
             socket.emit('timer-update', {
               sessionId,
               isInstructionPhase: true,
@@ -206,8 +202,8 @@ function CandidateInterview() {
         setTimeRemaining(prev => {
           const newTime = prev <= 1 ? 0 : prev - 1;
           
-          // Broadcast timer update every 5 seconds (or when under 60 seconds - every second)
-          if (socket && sessionId && (tickCount % 5 === 0 || newTime <= 60 || newTime === 0)) {
+          // Broadcast timer update - always send to prevent stuck timer
+          if (socket && sessionId) {
             socket.emit('timer-update', {
               sessionId,
               isInstructionPhase: false,
@@ -298,8 +294,14 @@ function CandidateInterview() {
   };
 
   const handleLanguageChange = (newLanguage: string) => {
+    console.log('=== SWITCHING CHALLENGE ===');
+    console.log('From:', language, 'To:', newLanguage);
+    console.log('Existing challenges:', Object.keys(challengeCode));
+    
     // Check if we already have code for this challenge
     if (challengeCode[newLanguage]) {
+      console.log('Restoring saved code for', newLanguage);
+      console.log('Saved code length:', challengeCode[newLanguage].length);
       // Restore previously written code - update both states immediately
       setLanguage(newLanguage);
       setCode(challengeCode[newLanguage]);
@@ -312,6 +314,7 @@ function CandidateInterview() {
       return;
     }
     
+    console.log('Loading fresh starter code for', newLanguage);
     // First time loading this challenge - load starter code
     setLanguage(newLanguage);
     
@@ -626,11 +629,16 @@ class Product {
     
     // Update code in state and editor
     setCode(starterCode);
+    console.log('Starter code loaded, length:', starterCode.length);
     // Save starter code to challenge-specific storage
-    setChallengeCode(prev => ({
-      ...prev,
-      [newLanguage]: starterCode
-    }));
+    setChallengeCode(prev => {
+      const updated = {
+        ...prev,
+        [newLanguage]: starterCode
+      };
+      console.log('Saved challenges:', Object.keys(updated));
+      return updated;
+    });
     
     // Emit to backend so it syncs with interviewer
     if (socket && sessionId) {
@@ -644,12 +652,22 @@ class Product {
       return;
     }
     
+    // CRITICAL: Ensure we're using the correct code for current language
+    const currentCode = challengeCode[language] || code;
+    
     setIsRunning(true);
     setOutput('⏳ Running test suite...\n');
 
-    console.log('Executing code with language:', language);
-    // Send code to backend for test execution
-    socket.emit('execute-code', { sessionId, code, language });
+    console.log('=== RUNNING TESTS ===' );
+    console.log('Current language:', language);
+    console.log('Code state length:', code.length);
+    console.log('Challenge code length:', challengeCode[language]?.length || 0);
+    console.log('Using code length:', currentCode.length);
+    console.log('Code preview (first 100 chars):', currentCode.substring(0, 100));
+    console.log('Challenge code stored:', Object.keys(challengeCode));
+    
+    // Send CURRENT CHALLENGE CODE to backend for test execution
+    socket.emit('execute-code', { sessionId, code: currentCode, language });
   };
 
   const handleSubmitTest = () => {

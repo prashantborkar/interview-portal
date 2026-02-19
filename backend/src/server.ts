@@ -476,17 +476,28 @@ public class LoginPage {
 
   socket.on('execute-code', async ({ sessionId, code, language }: { sessionId: string; code: string; language: string }) => {
     try {
+      console.log('=== BACKEND: EXECUTE-CODE RECEIVED ===');
+      console.log('Session ID:', sessionId);
+      console.log('Language:', language);
+      console.log('Code length:', code.length);
+      console.log('Code preview (first 150 chars):', code.substring(0, 150));
+      console.log('Code contains /html/body?:', code.includes('/html/body'));
+      console.log('Code contains Thread.sleep?:', code.includes('Thread.sleep'));
+      console.log('Code contains Optional.of?:', code.includes('Optional.of'));
+      
       let output = '';
       let success = true;
 
       // Debugging Test Scenarios for Automation Engineer Interview
       // Analyze the code and provide test results based on bug fixes
       
-      output += `🧪 Running Test Suite for ${language}...\n`;
-      output += `${'='.repeat(60)}\n\n`;
+      output += `🧪 Running Test Suite for ${language}...\\n`;
+      output += `${'='.repeat(60)}\\n\\n`;
 
       // Check if code contains bug fixes
       const testResults = analyzeDebugFixes(code, language);
+      
+      console.log('Test results:', testResults.map(t => `${t.name}: ${t.passed ? 'PASS' : 'FAIL'}`));
       
       testResults.forEach((test, index) => {
         output += `Test ${index + 1}: ${test.name}\n`;
