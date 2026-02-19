@@ -172,14 +172,18 @@ function CandidateInterview() {
   useEffect(() => {
     if (isTestSubmitted) return;
     
+    let tickCount = 0; // Track ticks for throttled updates
+    
     timerRef.current = setInterval(() => {
+      tickCount++;
+      
       if (isInstructionPhase) {
         // Instruction phase: countdown from 1 minute
         setInstructionTimeRemaining(prev => {
           const newTime = prev <= 1 ? 0 : prev - 1;
           
-          // Broadcast timer update to interviewer
-          if (socket && sessionId) {
+          // Broadcast timer update to interviewer every 5 seconds (or on critical moments)
+          if (socket && sessionId && (tickCount % 5 === 0 || newTime <= 10 || newTime === 0)) {
             socket.emit('timer-update', {
               sessionId,
               isInstructionPhase: true,
@@ -202,8 +206,8 @@ function CandidateInterview() {
         setTimeRemaining(prev => {
           const newTime = prev <= 1 ? 0 : prev - 1;
           
-          // Broadcast timer update to interviewer
-          if (socket && sessionId) {
+          // Broadcast timer update every 5 seconds (or when under 60 seconds - every second)
+          if (socket && sessionId && (tickCount % 5 === 0 || newTime <= 60 || newTime === 0)) {
             socket.emit('timer-update', {
               sessionId,
               isInstructionPhase: false,
@@ -296,9 +300,9 @@ function CandidateInterview() {
   const handleLanguageChange = (newLanguage: string) => {
     // Check if we already have code for this challenge
     if (challengeCode[newLanguage]) {
-      // Restore previously written code
-      setCode(challengeCode[newLanguage]);
+      // Restore previously written code - update both states immediately
       setLanguage(newLanguage);
+      setCode(challengeCode[newLanguage]);
       
       if (socket && sessionId) {
         socket.emit('language-change', { sessionId, language: newLanguage });

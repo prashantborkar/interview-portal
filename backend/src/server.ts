@@ -147,9 +147,9 @@ function analyzeDebugFixes(code: string, language: string): TestResult[] {
       break;
 
     case 'selenium-locators':
-      // Extract fillRegistrationForm method
-      const fillFormMatch = code.match(/public void fillRegistrationForm\([^)]*\)\s*\{([^}]*)\}/s);
-      const fillFormContent = fillFormMatch ? fillFormMatch[1] : '';
+      // Extract fillRegistrationForm method - use greedy matching for nested content
+      const fillFormMatch = code.match(/public void fillRegistrationForm\([^)]*\)[^{]*\{([\s\S]*?)\n\s*}\s*public/);
+      const fillFormContent = fillFormMatch ? fillFormMatch[1] : code;
       
       // Test 1: Check for absolute XPath removal in fillRegistrationForm
       const hasAbsXPathInForm = fillFormContent.includes('/html/body/div[1]');
@@ -161,8 +161,8 @@ function analyzeDebugFixes(code: string, language: string): TestResult[] {
           : '❌ FAIL - fillRegistrationForm() has absolute XPath /html/body/... - use stable ID locator'
       });
 
-      // Test 2: Check for index-based selectors in fillRegistrationForm
-      const hasIndexInForm = fillFormContent.includes(':nth-child');
+      // Test 2: Check for index-based selectors in code
+      const hasIndexInForm = code.includes(':nth-child');
       results.push({
         name: 'Test 2 (BUG 2): Fix Index-Based Selector',
         passed: !hasIndexInForm,
@@ -171,8 +171,8 @@ function analyzeDebugFixes(code: string, language: string): TestResult[] {
           : '❌ FAIL - fillRegistrationForm() has :nth-child selector - use ID attribute'
       });
 
-      // Test 3: Check for text-based XPath in fillRegistrationForm
-      const hasTextXPathInForm = fillFormContent.includes('contains(text(),');
+      // Test 3: Check for text-based XPath in code
+      const hasTextXPathInForm = code.includes('contains(text(),');
       results.push({
         name: 'Test 3 (BUG 3): Fix Text-Based XPath',
         passed: !hasTextXPathInForm,
@@ -181,12 +181,8 @@ function analyzeDebugFixes(code: string, language: string): TestResult[] {
           : '❌ FAIL - fillRegistrationForm() has contains(text(),) XPath - use ID locator'
       });
 
-      // Extract submitForm method
-      const submitMatch = code.match(/public void submitForm\([^)]*\)\s*\{([^}]*)\}/s);
-      const submitContent = submitMatch ? submitMatch[1] : '';
-      
-      // Test 4: Check for linkText locator in submitForm
-      const hasLinkTextInSubmit = submitContent.includes('By.linkText');
+      // Test 4: Check for linkText locator in code
+      const hasLinkTextInSubmit = code.includes('By.linkText');
       results.push({
         name: 'Test 4 (BUG 4): Fix LinkText Locator',
         passed: !hasLinkTextInSubmit,
@@ -234,7 +230,7 @@ function analyzeDebugFixes(code: string, language: string): TestResult[] {
       // Test 4: Check for result.get() usage in testGetUserById
       const hasGetInTest = testMethodContent.includes('result.get()');
       results.push({
-        name: 'Test 4 (BUG 2 & 3): Use Optional.get() Method',
+        name: 'Test 4 (BUG 4): Use Optional.get() Method',
         passed: hasGetInTest,
         message: hasGetInTest
           ? '✅ PASS - Using result.get() to access value in testGetUserById()'
@@ -274,7 +270,7 @@ function analyzeDebugFixes(code: string, language: string): TestResult[] {
       // Test 3: Check mock returns only p1 and p2 in testGetAllActiveProducts
       const hasOnlyP1P2InTest = testActiveContent.includes('Arrays.asList(p1, p2)') && !testActiveContent.includes('Arrays.asList(p1, p2, p3)');
       results.push({
-        name: 'Test 3 (BUG 2 & 3): Return Only Active Products',
+        name: 'Test 3 (BUG 3): Return Only Active Products',
         passed: hasOnlyP1P2InTest,
         message: hasOnlyP1P2InTest
           ? '✅ PASS - Mock returns only p1 and p2 (active products) in testGetAllActiveProducts()'
