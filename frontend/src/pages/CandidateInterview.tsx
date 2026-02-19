@@ -663,7 +663,11 @@ class Product {
     console.log('Code state length:', code.length);
     console.log('Challenge code length:', challengeCode[language]?.length || 0);
     console.log('Using code length:', currentCode.length);
-    console.log('Code preview (first 100 chars):', currentCode.substring(0, 100));
+    console.log('Code preview (first 200 chars):', currentCode.substring(0, 200));
+    console.log('Code contains "BUG 1"?:', currentCode.includes('BUG 1'));
+    console.log('Code contains "BUG 2"?:', currentCode.includes('BUG 2'));
+    console.log('Code contains "Optional.of"?:', currentCode.includes('Optional.of'));
+    console.log('Code contains "MockitoAnnotations.openMocks"?:', currentCode.includes('MockitoAnnotations.openMocks'));
     console.log('Challenge code stored:', Object.keys(challengeCode));
     
     // Send CURRENT CHALLENGE CODE to backend for test execution

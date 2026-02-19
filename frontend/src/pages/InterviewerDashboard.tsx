@@ -109,13 +109,15 @@ function InterviewerDashboard() {
     });
 
     newSocket.on('timer-update', (data: { sessionId: string; isInstructionPhase: boolean; instructionTimeRemaining: number; codingTimeRemaining: number }) => {
+      console.log('Timer update received:', data.sessionId, data.codingTimeRemaining);
       setSessions(prev => prev.map(session => 
         session.id === data.sessionId
           ? {
               ...session,
               isInstructionPhase: data.isInstructionPhase,
               instructionTimeRemaining: data.instructionTimeRemaining,
-              codingTimeRemaining: data.codingTimeRemaining
+              codingTimeRemaining: data.codingTimeRemaining,
+              lastUpdate: Date.now() // Force React re-render with timestamp
             }
           : session
       ));
@@ -127,8 +129,20 @@ function InterviewerDashboard() {
       setCandidateName('');
     });
 
+    // Handle tab visibility to prevent timer from getting stuck
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        console.log('Tab became active - refreshing connection');
+        // Force a state refresh when tab becomes visible
+        setSessions(prev => [...prev]);
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
     return () => {
       newSocket.close();
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, []);
 

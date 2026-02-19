@@ -10,6 +10,7 @@ export interface InterviewSession {
   isInstructionPhase?: boolean;
   instructionTimeRemaining?: number;
   codingTimeRemaining?: number;
+  lastUpdate?: number; // Timestamp to force updates
 }
 
 export interface Problem {

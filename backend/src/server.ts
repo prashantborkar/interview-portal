@@ -193,9 +193,16 @@ function analyzeDebugFixes(code: string, language: string): TestResult[] {
       break;
 
     case 'springboot-rest':
-      // Extract testGetUserById method
-      const testMethodMatch = code.match(/public void testGetUserById\([^)]*\)\s*\{([^}]*)\}/s);
-      const testMethodContent = testMethodMatch ? testMethodMatch[1] : '';
+      // Extract testGetUserById method - fallback to full code if extraction fails
+      const testMethodMatch = code.match(/public void testGetUserById\([^)]*\)[^{]*\{([\s\S]*?)\n\s*}\s*}/);
+      const testMethodContent = testMethodMatch ? testMethodMatch[1] : code;
+      
+      console.log('springboot-rest validation:');
+      console.log('Method extraction successful?', testMethodMatch !== null);
+      console.log('Checking content length:', testMethodContent.length);
+      console.log('Has Optional.of?:', testMethodContent.includes('Optional.of('));
+      console.log('Has thenReturn?:', testMethodContent.includes('thenReturn'));
+      console.log('Has Optional<User>?:', testMethodContent.includes('Optional<User>'));
       
       // Test 1: Check for Optional.of in mock within testGetUserById
       const hasOptionalInTest = testMethodContent.includes('Optional.of(') && testMethodContent.includes('thenReturn');
@@ -239,9 +246,13 @@ function analyzeDebugFixes(code: string, language: string): TestResult[] {
       break;
 
     case 'springboot-test':
-      // Extract setup method
-      const setupMatch = code.match(/public void setup\([^)]*\)\s*\{([^}]*)\}/s);
-      const setupContent = setupMatch ? setupMatch[1] : '';
+      // Extract setup method - fallback to full code
+      const setupMatch = code.match(/public void setup\([^)]*\)[^{]*\{([\s\S]*?)\n\s*}/);
+      const setupContent = setupMatch ? setupMatch[1] : code;
+      
+      console.log('springboot-test validation:');
+      console.log('Setup extraction successful?', setupMatch !== null);
+      console.log('Has MockitoAnnotations.openMocks?:', setupContent.includes('MockitoAnnotations.openMocks(this)'));
       
       // Test 1: Check for MockitoAnnotations.openMocks in setup
       const hasMockInitInSetup = setupContent.includes('MockitoAnnotations.openMocks(this)');
@@ -253,9 +264,12 @@ function analyzeDebugFixes(code: string, language: string): TestResult[] {
           : '❌ FAIL - Mocks not initialized in setup() method'
       });
 
-      // Extract testGetAllActiveProducts method
-      const testActiveMatch = code.match(/public void testGetAllActiveProducts\([^)]*\)\s*\{([^}]*)\}/s);
-      const testActiveContent = testActiveMatch ? testActiveMatch[1] : '';
+      // Extract testGetAllActiveProducts method - fallback to full code
+      const testActiveMatch = code.match(/public void testGetAllActiveProducts\([^)]*\)[^{]*\{([\s\S]*?)\n\s*}/);
+      const testActiveContent = testActiveMatch ? testActiveMatch[1] : code;
+      
+      console.log('Has findByActiveTrue in test?:', testActiveContent.includes('findByActiveTrue()'));
+      console.log('Has Arrays.asList(p1, p2)?:', testActiveContent.includes('Arrays.asList(p1, p2)'));
       
       // Test 2: Check for findByActiveTrue() method in testGetAllActiveProducts
       const hasCorrectMethodInTest = testActiveContent.includes('findByActiveTrue()');
