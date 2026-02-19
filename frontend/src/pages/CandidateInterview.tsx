@@ -19,6 +19,8 @@ function CandidateInterview() {
   const [session, setSession] = useState<SessionData | null>(null);
   const [code, setCode] = useState('');
   const [language, setLanguage] = useState('selenium-pageobject');
+  // Store code for each challenge separately
+  const [challengeCode, setChallengeCode] = useState<{ [key: string]: string }>({});
   const [output, setOutput] = useState('');
   const [isRunning, setIsRunning] = useState(false);
   const [error, setError] = useState('');
@@ -147,7 +149,9 @@ function CandidateInterview() {
           
           // Calculate total points across all challenges with updated results
           const total = Object.values(updatedResults).flat().reduce((sum, bug) => sum + bug.points, 0);
-          setTotalPoints(total);
+          // Cap at 10 points maximum
+          const cappedTotal = Math.min(total, 10);
+          setTotalPoints(cappedTotal);
           
           return updatedResults;
         });
@@ -172,6 +176,18 @@ function CandidateInterview() {
       if (isInstructionPhase) {
         // Instruction phase: countdown from 1 minute
         setInstructionTimeRemaining(prev => {
+          const newTime = prev <= 1 ? 0 : prev - 1;
+          
+          // Broadcast timer update to interviewer
+          if (socket && sessionId) {
+            socket.emit('timer-update', {
+              sessionId,
+              isInstructionPhase: true,
+              instructionTimeRemaining: newTime,
+              codingTimeRemaining: 15 * 60
+            });
+          }
+          
           if (prev <= 1) {
             setIsInstructionPhase(false); // Switch to coding phase
             setShowCodingStartNotification(true);
@@ -184,6 +200,18 @@ function CandidateInterview() {
       } else {
         // Coding phase: countdown from 15 minutes
         setTimeRemaining(prev => {
+          const newTime = prev <= 1 ? 0 : prev - 1;
+          
+          // Broadcast timer update to interviewer
+          if (socket && sessionId) {
+            socket.emit('timer-update', {
+              sessionId,
+              isInstructionPhase: false,
+              instructionTimeRemaining: 0,
+              codingTimeRemaining: newTime
+            });
+          }
+          
           if (prev <= 1) {
             handleSubmitTest();
             return 0;
@@ -254,6 +282,11 @@ function CandidateInterview() {
 
   const handleCodeChange = (newCode: string) => {
     setCode(newCode);
+    // Save code for current challenge
+    setChallengeCode(prev => ({
+      ...prev,
+      [language]: newCode
+    }));
     if (socket && sessionId) {
       console.log('Sending code update:', newCode.substring(0, 50));
       socket.emit('code-change', { sessionId, code: newCode, language });
@@ -261,6 +294,21 @@ function CandidateInterview() {
   };
 
   const handleLanguageChange = (newLanguage: string) => {
+    // Check if we already have code for this challenge
+    if (challengeCode[newLanguage]) {
+      // Restore previously written code
+      setCode(challengeCode[newLanguage]);
+      setLanguage(newLanguage);
+      
+      if (socket && sessionId) {
+        socket.emit('language-change', { sessionId, language: newLanguage });
+        // Emit the saved code so interviewer sees it too
+        socket.emit('code-change', { sessionId, code: challengeCode[newLanguage], language: newLanguage });
+      }
+      return;
+    }
+    
+    // First time loading this challenge - load starter code
     setLanguage(newLanguage);
     
     // Emit language change to backend
@@ -355,17 +403,18 @@ public class ShoppingCartTest {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
+        // BUG 2: Not using elementToBeClickable wait before clicking
         addButton.click();
     }
     
     public boolean isProductInCart(String productName) {
-        // BUG 2: Not waiting for cart to update
+        // BUG 3: Not waiting for cart to update
         WebElement cartItems = driver.findElement(By.id("cart-items"));
         return cartItems.getText().contains(productName);
     }
     
     public int getCartItemCount() {
-        // BUG 3: Element might not be present yet
+        // BUG 4: Element might not be present yet
         WebElement badge = driver.findElement(By.className("cart-badge"));
         return Integer.parseInt(badge.getText());
     }
@@ -573,6 +622,11 @@ class Product {
     
     // Update code in state and editor
     setCode(starterCode);
+    // Save starter code to challenge-specific storage
+    setChallengeCode(prev => ({
+      ...prev,
+      [newLanguage]: starterCode
+    }));
     
     // Emit to backend so it syncs with interviewer
     if (socket && sessionId) {
@@ -632,9 +686,10 @@ class Product {
     const bugsPassed = allBugs.filter(b => b.passed).length;
     const totalBugs = allBugs.length;
     
-    // Round total points to 1 decimal
-    const score = Math.round(totalPoints * 10) / 10;
-    const percentage = Math.round((totalPoints / 10) * 100);
+    // Round total points to 1 decimal and cap at 10
+    const rawScore = Math.round(totalPoints * 10) / 10;
+    const score = Math.min(rawScore, 10);
+    const percentage = Math.round((score / 10) * 100);
     
     return { score, percentage, bugsPassed, totalBugs };
   };

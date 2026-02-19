@@ -35,6 +35,9 @@ interface InterviewSession {
   status: 'waiting' | 'active' | 'completed';
   output?: string;
   createdAt: Date;
+  isInstructionPhase?: boolean;
+  instructionTimeRemaining?: number;
+  codingTimeRemaining?: number;
 }
 
 const sessions: Map<string, InterviewSession> = new Map();
@@ -107,7 +110,7 @@ function analyzeDebugFixes(code: string, language: string): TestResult[] {
       // Test 2: Check for elementToBeClickable wait in addProductToCart
       const hasClickableInAdd = addProductContent.includes('elementToBeClickable');
       results.push({
-        name: 'Test 2 (BUG 1): Add Clickable Wait',
+        name: 'Test 2 (BUG 2): Add Clickable Wait',
         passed: hasClickableInAdd,
         message: hasClickableInAdd
           ? '✅ PASS - Using elementToBeClickable() before click in addProductToCart()'
@@ -121,7 +124,7 @@ function analyzeDebugFixes(code: string, language: string): TestResult[] {
       // Test 3: Check for cart text update wait in isProductInCart
       const hasTextWaitInCart = isProductContent.includes('textToBePresentInElement');
       results.push({
-        name: 'Test 3 (BUG 2): Add Cart Update Wait',
+        name: 'Test 3 (BUG 3): Add Cart Update Wait',
         passed: hasTextWaitInCart,
         message: hasTextWaitInCart
           ? '✅ PASS - Cart update wait condition added in isProductInCart()'
@@ -135,7 +138,7 @@ function analyzeDebugFixes(code: string, language: string): TestResult[] {
       // Test 4: Check for badge presence wait in getCartItemCount
       const hasBadgeWaitInCount = getCountContent.includes('presenceOfElementLocated');
       results.push({
-        name: 'Test 4 (BUG 3): Add Badge Presence Wait',
+        name: 'Test 4 (BUG 4): Add Badge Presence Wait',
         passed: hasBadgeWaitInCount,
         message: hasBadgeWaitInCount
           ? '✅ PASS - Badge wait condition added in getCartItemCount()'
@@ -449,6 +452,29 @@ public class LoginPage {
       session.language = language;
       // Broadcast to all clients EXCEPT the sender
       socket.broadcast.emit('language-update', { sessionId, language });
+    }
+  });
+
+  socket.on('timer-update', ({ sessionId, isInstructionPhase, instructionTimeRemaining, codingTimeRemaining }: { 
+    sessionId: string; 
+    isInstructionPhase: boolean; 
+    instructionTimeRemaining: number; 
+    codingTimeRemaining: number 
+  }) => {
+    const session = sessions.get(sessionId);
+    
+    if (session) {
+      session.isInstructionPhase = isInstructionPhase;
+      session.instructionTimeRemaining = instructionTimeRemaining;
+      session.codingTimeRemaining = codingTimeRemaining;
+      
+      // Broadcast timer update to all clients (especially interviewer)
+      io.emit('timer-update', { 
+        sessionId, 
+        isInstructionPhase, 
+        instructionTimeRemaining, 
+        codingTimeRemaining 
+      });
     }
   });
 

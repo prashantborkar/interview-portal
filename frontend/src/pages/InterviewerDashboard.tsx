@@ -108,6 +108,19 @@ function InterviewerDashboard() {
       setShowResultsModal(true);
     });
 
+    newSocket.on('timer-update', (data: { sessionId: string; isInstructionPhase: boolean; instructionTimeRemaining: number; codingTimeRemaining: number }) => {
+      setSessions(prev => prev.map(session => 
+        session.id === data.sessionId
+          ? {
+              ...session,
+              isInstructionPhase: data.isInstructionPhase,
+              instructionTimeRemaining: data.instructionTimeRemaining,
+              codingTimeRemaining: data.codingTimeRemaining
+            }
+          : session
+      ));
+    });
+
     newSocket.on('session-created', (session: InterviewSession) => {
       setSessions(prev => [...prev, session]);
       setShowCreateForm(false);
@@ -167,6 +180,12 @@ function InterviewerDashboard() {
     const link = `${window.location.origin}/interview/${sessionId}`;
     navigator.clipboard.writeText(link);
     alert('Interview link copied to clipboard!');
+  };
+
+  const formatTime = (seconds: number): string => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
   const getStatusColor = (status: string) => {
@@ -259,6 +278,32 @@ function InterviewerDashboard() {
                         <span className="capitalize">{session.status}</span>
                       </span>
                     </div>
+                    
+                    {/* Timer Display */}
+                    {session.status === 'active' && (
+                      <div className="mt-2 space-y-1">
+                        {session.isInstructionPhase ? (
+                          <div className="flex items-center space-x-2 text-xs">
+                            <Clock className="w-3 h-3 text-blue-600" />
+                            <span className="text-blue-600 font-medium">
+                              Reading Instructions: {formatTime(session.instructionTimeRemaining || 0)}
+                            </span>
+                          </div>
+                        ) : (
+                          <div className="flex items-center space-x-2 text-xs">
+                            <Clock className="w-3 h-3 text-green-600" />
+                            <span className={
+                              (session.codingTimeRemaining || 0) < 60 ? 'text-red-600 font-bold animate-pulse' :
+                              (session.codingTimeRemaining || 0) < 300 ? 'text-yellow-600 font-medium' :
+                              'text-green-600 font-medium'
+                            }>
+                              Coding Time: {formatTime(session.codingTimeRemaining || 0)}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    
                     <div className="flex items-center space-x-2 mt-3">
                       <button
                         onClick={(e) => {

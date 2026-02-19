@@ -7,6 +7,9 @@ export interface InterviewSession {
   status: 'waiting' | 'active' | 'completed';
   output?: string;
   createdAt: Date;
+  isInstructionPhase?: boolean;
+  instructionTimeRemaining?: number;
+  codingTimeRemaining?: number;
 }
 
 export interface Problem {
