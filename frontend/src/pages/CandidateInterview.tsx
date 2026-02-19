@@ -897,11 +897,14 @@ class Product {
                   Available Challenges
                 </h3>
                 <div className="space-y-3 text-sm">
-                  <div className={`p-3 rounded border ${
+                  <div 
+                    onClick={() => !isInstructionPhase && handleLanguageChange('selenium-pageobject')}
+                    className={`p-3 rounded border cursor-pointer transition-all hover:shadow-md ${
+                    language === 'selenium-pageobject' ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-300' :
                     completedChallenges.has('selenium-pageobject') 
                       ? 'bg-green-50 border-green-500' 
-                      : 'bg-white border-blue-200'
-                  }`}>
+                      : 'bg-white border-blue-200 hover:border-blue-400'
+                  } ${isInstructionPhase ? 'opacity-50 cursor-not-allowed' : ''}`}>
                     <p className="font-bold text-blue-900 flex items-center justify-between">
                       <span>🔍 Selenium - Page Object Bug</span>
                       {completedChallenges.has('selenium-pageobject') && <span className="text-green-600 text-lg">✓</span>}
@@ -922,11 +925,14 @@ class Product {
                       </div>
                     )}
                   </div>
-                  <div className={`p-3 rounded border ${
+                  <div 
+                    onClick={() => !isInstructionPhase && handleLanguageChange('selenium-waits')}
+                    className={`p-3 rounded border cursor-pointer transition-all hover:shadow-md ${
+                    language === 'selenium-waits' ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-300' :
                     completedChallenges.has('selenium-waits') 
                       ? 'bg-green-50 border-green-500' 
-                      : 'bg-white border-blue-200'
-                  }`}>
+                      : 'bg-white border-blue-200 hover:border-blue-400'
+                  } ${isInstructionPhase ? 'opacity-50 cursor-not-allowed' : ''}`}>
                     <p className="font-bold text-blue-900 flex items-center justify-between">
                       <span>⏱️ Selenium - Wait Conditions</span>
                       {completedChallenges.has('selenium-waits') && <span className="text-green-600 text-lg">✓</span>}
@@ -947,11 +953,14 @@ class Product {
                       </div>
                     )}
                   </div>
-                  <div className={`p-3 rounded border ${
+                  <div 
+                    onClick={() => !isInstructionPhase && handleLanguageChange('selenium-locators')}
+                    className={`p-3 rounded border cursor-pointer transition-all hover:shadow-md ${
+                    language === 'selenium-locators' ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-300' :
                     completedChallenges.has('selenium-locators') 
                       ? 'bg-green-50 border-green-500' 
-                      : 'bg-white border-blue-200'
-                  }`}>
+                      : 'bg-white border-blue-200 hover:border-blue-400'
+                  } ${isInstructionPhase ? 'opacity-50 cursor-not-allowed' : ''}`}>
                     <p className="font-bold text-blue-900 flex items-center justify-between">
                       <span>🎯 Selenium - Locator Strategy</span>
                       {completedChallenges.has('selenium-locators') && <span className="text-green-600 text-lg">✓</span>}
@@ -972,11 +981,14 @@ class Product {
                       </div>
                     )}
                   </div>
-                  <div className={`p-3 rounded border ${
+                  <div 
+                    onClick={() => !isInstructionPhase && handleLanguageChange('springboot-rest')}
+                    className={`p-3 rounded border cursor-pointer transition-all hover:shadow-md ${
+                    language === 'springboot-rest' ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-300' :
                     completedChallenges.has('springboot-rest') 
                       ? 'bg-green-50 border-green-500' 
-                      : 'bg-white border-blue-200'
-                  }`}>
+                      : 'bg-white border-blue-200 hover:border-blue-400'
+                  } ${isInstructionPhase ? 'opacity-50 cursor-not-allowed' : ''}`}>
                     <p className="font-bold text-blue-900 flex items-center justify-between">
                       <span>🌱 SpringBoot - REST API Mock</span>
                       {completedChallenges.has('springboot-rest') && <span className="text-green-600 text-lg">✓</span>}
@@ -997,11 +1009,14 @@ class Product {
                       </div>
                     )}
                   </div>
-                  <div className={`p-3 rounded border ${
+                  <div 
+                    onClick={() => !isInstructionPhase && handleLanguageChange('springboot-test')}
+                    className={`p-3 rounded border cursor-pointer transition-all hover:shadow-md ${
+                    language === 'springboot-test' ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-300' :
                     completedChallenges.has('springboot-test') 
                       ? 'bg-green-50 border-green-500' 
-                      : 'bg-white border-blue-200'
-                  }`}>
+                      : 'bg-white border-blue-200 hover:border-blue-400'
+                  } ${isInstructionPhase ? 'opacity-50 cursor-not-allowed' : ''}`}>
                     <p className="font-bold text-blue-900 flex items-center justify-between">
                       <span>✅ SpringBoot - Unit Test</span>
                       {completedChallenges.has('springboot-test') && <span className="text-green-600 text-lg">✓</span>}
@@ -1028,7 +1043,7 @@ class Product {
               <div className="bg-green-50 border border-green-200 rounded-lg p-4">
                 <h3 className="text-lg font-semibold text-green-900 mb-2">📝 Instructions</h3>
                 <ol className="list-decimal list-inside space-y-2 text-sm text-gray-700">
-                  <li>Select a challenge from the dropdown above the editor</li>
+                  <li><strong>Click a challenge</strong> from the list above to load its code</li>
                   <li>Read the code comments - they explain the bugs</li>
                   <li>Identify all issues (usually 2-4 bugs per challenge)</li>
                   <li>Fix the bugs in the code editor</li>
@@ -1077,19 +1092,10 @@ class Product {
                   </div>
                 )}
                 
-                <div className="flex items-center gap-3">
-                  <select
-                    value={language}
-                    onChange={(e) => handleLanguageChange(e.target.value)}
-                    disabled={isInstructionPhase}
-                    className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-nice-blue focus:border-transparent bg-white font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <option value="selenium-pageobject">Selenium - Page Object Bug</option>
-                    <option value="selenium-waits">Selenium - Wait Conditions Bug</option>
-                    <option value="selenium-locators">Selenium - Locator Strategy Bug</option>
-                    <option value="springboot-rest">SpringBoot - REST API Mock Bug</option>
-                    <option value="springboot-test">SpringBoot - Unit Test Bug</option>
-                  </select>
+                <div className="flex items-center justify-between gap-3">
+                  <div className="text-lg font-bold text-gray-800">
+                    {getLanguageLabel(language)}
+                  </div>
                   <button
                     onClick={runCode}
                     disabled={isRunning || isInstructionPhase}
