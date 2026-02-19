@@ -34,9 +34,7 @@ function CandidateInterview() {
     const labels: { [key: string]: string } = {
       'selenium-pageobject': '🎭 Selenium - Page Object Model',
       'selenium-waits': '⏳ Selenium - Waits & Synchronization',
-      'selenium-locators': '🎯 Selenium - Locator Strategy',
-      'springboot-rest': '🌱 SpringBoot - REST API Mock',
-      'springboot-test': '✅ SpringBoot - Unit Test'
+      'selenium-locators': '🎯 Selenium - Locator Strategy'
     };
     return labels[lang] || lang;
   };
@@ -493,142 +491,6 @@ public class RegistrationFormPage {
 // - Relative XPath: //input[@id='name'], //button[@type='submit']`;
         break;
 
-      case 'springboot-rest':
-        starterCode = `// DEBUGGING CHALLENGE: REST API Mock Bug
-// SCENARIO: Unit test for User Service failing
-// ISSUE: Mock not configured correctly, test returns null
-// YOUR TASK: Fix the mock setup and assertions
-
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.BeforeEach;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
-import static org.mockito.Mockito.*;
-import static org.junit.jupiter.api.Assertions.*;
-import java.util.Optional;
-
-public class UserServiceTest {
-    
-    @Mock
-    private UserRepository userRepository;
-    
-    @InjectMocks
-    private UserService userService;
-    
-    @BeforeEach
-    public void setup() {
-        MockitoAnnotations.openMocks(this);
-    }
-    
-    @Test
-    public void testGetUserById() {
-        // BUG 1: Mock not returning Optional - should wrap in Optional.of()
-        User mockUser = new User(1L, "John Doe", "john@example.com");
-        when(userRepository.findById(1L)).thenReturn(mockUser);
-        
-        // BUG 2: Service returns Optional<User> but test expects User
-        User result = userService.getUserById(1L);
-        
-        // BUG 3: Assertion will fail due to incorrect mock setup
-        assertNotNull(result);
-        assertEquals("John Doe", result.getName());
-        verify(userRepository, times(1)).findById(1L);
-    }
-}
-
-class User {
-    private Long id;
-    private String name;
-    private String email;
-    
-    public User(Long id, String name, String email) {
-        this.id = id;
-        this.name = name;
-        this.email = email;
-    }
-    
-    public String getName() { return name; }
-}
-
-// EXPECTED FIX:
-// 1. Wrap mock return in Optional
-// 2. Change result type to Optional
-// 3. Check if Optional has value before accessing
-// 4. Use Optional method to get value`;
-        break;
-
-      case 'springboot-test':
-        starterCode = `// DEBUGGING CHALLENGE: SpringBoot Unit Test Bug
-// SCENARIO: Service layer test with multiple issues
-// ISSUE: Mock setup incorrect, wrong method verified
-// YOUR TASK: Fix initialization and mock behavior
-
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.mockito.Mock;
-import org.mockito.InjectMocks;
-import org.mockito.MockitoAnnotations;
-import static org.mockito.Mockito.*;
-import static org.junit.jupiter.api.Assertions.*;
-import java.util.Arrays;
-import java.util.List;
-
-public class ProductServiceTest {
-    
-    @Mock
-    private ProductRepository productRepository;
-    
-    @InjectMocks
-    private ProductService productService;
-    
-    @BeforeEach
-    public void setup() {
-        // BUG 1: Missing MockitoAnnotations.openMocks(this)
-    }
-    
-    @Test
-    public void testGetAllActiveProducts() {
-        // Mock data
-        Product p1 = new Product(1L, "Laptop", true);
-        Product p2 = new Product(2L, "Phone", true);
-        Product p3 = new Product(3L, "Tablet", false);
-        
-        // BUG 2: Mock returns all products, not filtered
-        when(productRepository.findAll())
-            .thenReturn(Arrays.asList(p1, p2, p3));
-        
-        List<Product> activeProducts = productService.getActiveProducts();
-        
-        // BUG 3: Assertion expects 2 but mock returns 3
-        assertEquals(2, activeProducts.size());
-        
-        // BUG 4: Verify called on wrong method
-        verify(productRepository).findByActiveTrue();
-    }
-}
-
-class Product {
-    private Long id;
-    private String name;
-    private boolean active;
-    
-    public Product(Long id, String name, boolean active) {
-        this.id = id;
-        this.name = name;
-        this.active = active;
-    }
-    
-    public boolean isActive() { return active; }
-}
-
-// EXPECTED FIX:
-// 1. Initialize mocks in setup method
-// 2. Mock the correct repository method for active products
-// 3. Return only active products (2 items)
-// 4. Verify the correct method was called`;
-        break;
-
       default:
         starterCode = '// Select a debugging challenge from the dropdown above';
     }
@@ -1070,62 +932,6 @@ class Product {
                     {bugResults['selenium-locators'] && (
                       <div className="flex gap-1 mt-2">
                         {bugResults['selenium-locators'].map((bug) => (
-                          <span
-                            key={bug.bugNumber}
-                            className={`text-xs px-2 py-1 rounded ${
-                              bug.passed ? 'bg-green-200 text-green-800' : 'bg-gray-200 text-gray-600'
-                            }`}
-                          >
-                            B{bug.bugNumber}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                  <div 
-                    onClick={() => !isInstructionPhase && handleLanguageChange('springboot-rest')}
-                    className={`p-3 rounded border cursor-pointer transition-all hover:shadow-md ${
-                    language === 'springboot-rest' ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-300' :
-                    completedChallenges.has('springboot-rest') 
-                      ? 'bg-green-50 border-green-500' 
-                      : 'bg-white border-blue-200 hover:border-blue-400'
-                  } ${isInstructionPhase ? 'opacity-50 cursor-not-allowed' : ''}`}>
-                    <p className="font-bold text-blue-900 flex items-center justify-between">
-                      <span>🌱 SpringBoot - REST API Mock</span>
-                      {completedChallenges.has('springboot-rest') && <span className="text-green-600 text-lg">✓</span>}
-                    </p>
-                    <p className="text-gray-600 mt-1 text-xs">Correct Optional handling in Mockito mocks</p>
-                    {bugResults['springboot-rest'] && (
-                      <div className="flex gap-1 mt-2">
-                        {bugResults['springboot-rest'].map((bug) => (
-                          <span
-                            key={bug.bugNumber}
-                            className={`text-xs px-2 py-1 rounded ${
-                              bug.passed ? 'bg-green-200 text-green-800' : 'bg-gray-200 text-gray-600'
-                            }`}
-                          >
-                            B{bug.bugNumber}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                  <div 
-                    onClick={() => !isInstructionPhase && handleLanguageChange('springboot-test')}
-                    className={`p-3 rounded border cursor-pointer transition-all hover:shadow-md ${
-                    language === 'springboot-test' ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-300' :
-                    completedChallenges.has('springboot-test') 
-                      ? 'bg-green-50 border-green-500' 
-                      : 'bg-white border-blue-200 hover:border-blue-400'
-                  } ${isInstructionPhase ? 'opacity-50 cursor-not-allowed' : ''}`}>
-                    <p className="font-bold text-blue-900 flex items-center justify-between">
-                      <span>✅ SpringBoot - Unit Test</span>
-                      {completedChallenges.has('springboot-test') && <span className="text-green-600 text-lg">✓</span>}
-                    </p>
-                    <p className="text-gray-600 mt-1 text-xs">Fix mock initialization and method verification</p>
-                    {bugResults['springboot-test'] && (
-                      <div className="flex gap-1 mt-2">
-                        {bugResults['springboot-test'].map((bug) => (
                           <span
                             key={bug.bugNumber}
                             className={`text-xs px-2 py-1 rounded ${
