@@ -27,6 +27,18 @@ function CandidateInterview() {
   const internalClipboard = useRef<string>('');
   const lastCopyTime = useRef<number>(0);
   
+  // Helper function to get challenge display name
+  const getLanguageLabel = (lang: string): string => {
+    const labels: { [key: string]: string } = {
+      'selenium-pageobject': '🎭 Selenium - Page Object Model',
+      'selenium-waits': '⏳ Selenium - Waits & Synchronization',
+      'selenium-locators': '🎯 Selenium - Locator Strategy',
+      'springboot-rest': '🌱 SpringBoot - REST API Mock',
+      'springboot-test': '✅ SpringBoot - Unit Test'
+    };
+    return labels[lang] || lang;
+  };
+  
   // Timer and scoring state
   const [isInstructionPhase, setIsInstructionPhase] = useState(true); // New: instruction reading phase
   const [instructionTimeRemaining, setInstructionTimeRemaining] = useState(60); // 1 minute for instructions
