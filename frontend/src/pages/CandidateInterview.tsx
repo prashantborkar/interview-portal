@@ -57,6 +57,23 @@ function CandidateInterview() {
   const [bugResults, setBugResults] = useState<{ [challenge: string]: BugResult[] }>({});
   const [totalPoints, setTotalPoints] = useState(0);
 
+  // Clean up invalid challenges on mount (only 3 Selenium challenges allowed)
+  useEffect(() => {
+    const validChallenges = ['selenium-pageobject', 'selenium-waits', 'selenium-locators'];
+    setChallengeCode(prev => {
+      const cleaned: { [key: string]: string } = {};
+      Object.keys(prev).forEach(key => {
+        if (validChallenges.includes(key)) {
+          cleaned[key] = prev[key];
+        }
+      });
+      if (Object.keys(cleaned).length !== Object.keys(prev).length) {
+        console.log('Cleaned invalid challenges from state');
+      }
+      return cleaned;
+    });
+  }, []);
+
   useEffect(() => {
     if (!sessionId) return;
 
