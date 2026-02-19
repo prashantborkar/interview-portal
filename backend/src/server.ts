@@ -539,6 +539,8 @@ public class LoginPage {
 
   socket.on('test-submitted', (results: any) => {
     console.log('Test submitted for session:', results.sessionId);
+    console.log('Test submission type:', results.isAutoSubmit ? 'AUTO (Timer)' : 'MANUAL (Button)');
+    console.log('Score:', results.score, 'Bugs passed:', results.bugsPassed, '/', results.totalBugs);
     
     // Mark session as completed
     const session = sessions.get(results.sessionId);
@@ -548,6 +550,7 @@ public class LoginPage {
     }
     
     // Broadcast results to all clients (especially interviewer)
+    console.log('Broadcasting results to all clients...');
     io.emit('candidate-test-results', results);
   });
 

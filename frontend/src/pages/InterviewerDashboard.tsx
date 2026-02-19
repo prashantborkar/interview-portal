@@ -27,6 +27,7 @@ interface TestResults {
   bugResults: { [challenge: string]: BugResult[] };
   timeUsed: number;
   submittedAt: string;
+  isAutoSubmit?: boolean;
 }
 
 function InterviewerDashboard() {
@@ -101,7 +102,8 @@ function InterviewerDashboard() {
     });
 
     newSocket.on('candidate-test-results', (results: TestResults) => {
-      console.log('Candidate test results received:', results);
+      console.log('✅ Candidate test results received on interviewer dashboard:', results);
+      console.log('Submission type:', results.isAutoSubmit ? '⏰ AUTO-SUBMITTED (Timer expired)' : '🖱️ MANUALLY SUBMITTED');
       setTestResults(results);
       setShowResultsModal(true);
     });
@@ -396,10 +398,15 @@ function InterviewerDashboard() {
             <div className="sticky top-0 bg-gradient-to-r from-nice-blue to-blue-600 text-white p-6 rounded-t-2xl">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
-                  <div className="text-4xl">🏆</div>
+                  <div className="text-4xl">{testResults.isAutoSubmit ? '⏰' : '🏆'}</div>
                   <div>
-                    <h2 className="text-2xl font-bold">Test Submitted</h2>
-                    <p className="text-blue-100 text-sm mt-1">{testResults.candidateName || 'Candidate'}</p>
+                    <h2 className="text-2xl font-bold">
+                      {testResults.isAutoSubmit ? 'Time Completed - Auto Submitted' : 'Test Submitted'}
+                    </h2>
+                    <p className="text-blue-100 text-sm mt-1">
+                      {testResults.candidateName || 'Candidate'}
+                      {testResults.isAutoSubmit && ' • Timer expired'}
+                    </p>
                   </div>
                 </div>
                 <button

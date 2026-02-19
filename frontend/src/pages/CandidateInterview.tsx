@@ -583,14 +583,10 @@ class Product {
   };
 
   const handleSubmitTest = () => {
-    setIsTestSubmitted(true);
-    if (timerRef.current) {
-      clearInterval(timerRef.current);
-    }
-    
-    // Send results to interviewer
+    // Send results to interviewer BEFORE changing state
     if (socket && sessionId) {
       const { score, percentage, bugsPassed, totalBugs } = calculateScore();
+      console.log('Submitting test results to interviewer:', { score, percentage, bugsPassed, totalBugs });
       socket.emit('test-submitted', {
         sessionId,
         candidateName: session?.candidateName,
@@ -601,8 +597,14 @@ class Product {
         completedChallenges: Array.from(completedChallenges),
         bugResults,
         timeUsed: 15 * 60 - timeRemaining,
-        submittedAt: new Date().toISOString()
+        submittedAt: new Date().toISOString(),
+        isAutoSubmit: timeRemaining === 0 // Flag to indicate if this was auto-submitted
       });
+    }
+    
+    setIsTestSubmitted(true);
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
     }
   };
 
