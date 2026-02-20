@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import { io, Socket } from 'socket.io-client';
-import { Code, AlertCircle, Play, Terminal, AlertTriangle, Clock, Trophy } from 'lucide-react';
+import { AlertCircle, Play, Terminal, AlertTriangle, Clock, Trophy } from 'lucide-react';
 import CodeEditor from '../components/CodeEditor';
 
 interface SessionData {
@@ -25,9 +25,6 @@ function CandidateInterview() {
   const [output, setOutput] = useState('');
   const [isRunning, setIsRunning] = useState(false);
   
-  // Store code for each challenge separately
-  const [challengeCode, setChallengeCode] = useState<{ [key: string]: string }>({});
-  
   const [error, setError] = useState('');
   const [pasteWarning, setPasteWarning] = useState(false);
   const editorContainerRef = useRef<HTMLDivElement>(null);
@@ -35,7 +32,7 @@ function CandidateInterview() {
   const lastCopyTime = useRef<number>(0);
   
   // Helper function to get challenge display name
-  const getLanguageLabel = (lang: string): string => {
+  const getLanguageLabel = (): string => {
     return 'Selenium WebDriver - Senior Automation Engineer (10 Bugs)';
   };
 
@@ -284,7 +281,7 @@ public class RegistrationForm {
       const bugTestResults: BugResult[] = [];
       const testLines = output.split('\n');
       
-      testLines.forEach((line, index) => {
+      testLines.forEach((line) => {
         // Match lines like "  ✅ BUG 1: PASS [1.0 point]" or "  ❌ BUG 2: FAIL [0.0 point]"
         const bugMatch = line.match(/[✅❌]\s*BUG\s*(\d+):\s*(PASS|FAIL)/);
         if (bugMatch) {
