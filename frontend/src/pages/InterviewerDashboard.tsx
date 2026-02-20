@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { io, Socket } from 'socket.io-client';
 import { Copy, Plus, Eye, Clock, CheckCircle2, Users, Terminal, AlertTriangle } from 'lucide-react';
 import { InterviewSession } from '../types';
@@ -31,6 +32,7 @@ interface TestResults {
 }
 
 function InterviewerDashboard() {
+  const navigate = useNavigate();
   const [socket, setSocket] = useState<Socket | null>(null);
   const [sessions, setSessions] = useState<InterviewSession[]>([]);
   const [selectedSession, setSelectedSession] = useState<InterviewSession | null>(null);
@@ -41,6 +43,24 @@ function InterviewerDashboard() {
   const [testResults, setTestResults] = useState<TestResults | null>(null);
   const [showResultsModal, setShowResultsModal] = useState(false);
   const [forceUpdateCounter, setForceUpdateCounter] = useState(0); // Force re-render when tab becomes active
+
+  // Security: Prevent candidates from accessing interviewer dashboard
+  useEffect(() => {
+    const candidateSession = localStorage.getItem('candidateSession');
+    const sessionTime = localStorage.getItem('candidateSessionTime');
+    
+    if (candidateSession && sessionTime) {
+      // Check if session is still active (within 2 hours)
+      const twoHoursInMs = 2 * 60 * 60 * 1000;
+      const isSessionActive = (Date.now() - parseInt(sessionTime)) < twoHoursInMs;
+      
+      if (isSessionActive) {
+        // Redirect candidate back to their interview
+        alert('⛔ Access Denied: You are a candidate in an active interview session. Unauthorized access to interviewer dashboard is not allowed.');
+        navigate(`/interview/${candidateSession}`, { replace: true });
+      }
+    }
+  }, [navigate]);
 
   useEffect(() => {
     const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';

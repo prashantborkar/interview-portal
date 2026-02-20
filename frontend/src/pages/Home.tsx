@@ -1,8 +1,27 @@
 import { useNavigate } from 'react-router-dom';
+import { useEffect } from 'react';
 import { Code, Users, Sparkles } from 'lucide-react';
 
 function Home() {
   const navigate = useNavigate();
+
+  // Security: Prevent candidates from accessing this page
+  useEffect(() => {
+    const candidateSession = localStorage.getItem('candidateSession');
+    const sessionTime = localStorage.getItem('candidateSessionTime');
+    
+    if (candidateSession && sessionTime) {
+      // Check if session is still active (within 2 hours)
+      const twoHoursInMs = 2 * 60 * 60 * 1000;
+      const isSessionActive = (Date.now() - parseInt(sessionTime)) < twoHoursInMs;
+      
+      if (isSessionActive) {
+        // Redirect candidate back to their interview
+        alert('⛔ Access Denied: You are a candidate in an active interview session. Please complete your test.');
+        navigate(`/interview/${candidateSession}`, { replace: true });
+      }
+    }
+  }, [navigate]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-nice-sky via-white to-nice-gray">

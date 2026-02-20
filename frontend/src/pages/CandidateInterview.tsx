@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { io, Socket } from 'socket.io-client';
 import { AlertCircle, Play, Terminal, AlertTriangle, Clock, Trophy } from 'lucide-react';
 import CodeEditor from '../components/CodeEditor';
@@ -18,6 +18,8 @@ interface SessionData {
 
 function CandidateInterview() {
   const { sessionId } = useParams<{ sessionId: string }>();
+  const navigate = useNavigate();
+  const location = useLocation();
   const [socket, setSocket] = useState<Socket | null>(null);
   const [session, setSession] = useState<SessionData | null>(null);
   const [code, setCode] = useState('');
@@ -211,8 +213,110 @@ public class RegistrationForm {
     }
   }, [sessionId]);
 
+  // Security: Block navigation and disable back button for candidates
+  useEffect(() => {
+    // Prevent browser back/forward navigation
+    const handlePopState = (e: PopStateEvent) => {
+      e.preventDefault();
+      window.history.pushState(null, '', location.pathname);
+      alert('❌ Navigation is disabled during the interview. Please complete your test.');
+    };
+
+    // Push current state to disable back button
+    window.history.pushState(null, '', location.pathname);
+    window.addEventListener('popstate', handlePopState);
+
+    // Prevent page reload/close without confirmation
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (!isTestSubmitted) {
+        e.preventDefault();
+        e.returnValue = 'Your test is still in progress. Are you sure you want to leave?';
+        return e.returnValue;
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    // Prevent right-click context menu
+    const handleContextMenu = (e: MouseEvent) => {
+      e.preventDefault();
+      return false;
+    };
+    document.addEventListener('contextmenu', handleContextMenu);
+
+    // Prevent DevTools access (F12, Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+U, etc.)
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Prevent F12
+      if (e.key === 'F12') {
+        e.preventDefault();
+        return false;
+      }
+      
+      // Prevent Ctrl+Shift+I (Inspect)
+      if (e.ctrlKey && e.shiftKey && e.key === 'I') {
+        e.preventDefault();
+        return false;
+      }
+      
+      // Prevent Ctrl+Shift+J (Console)
+      if (e.ctrlKey && e.shiftKey && e.key === 'J') {
+        e.preventDefault();
+        return false;
+      }
+      
+      // Prevent Ctrl+U (View Source)
+      if (e.ctrlKey && e.key === 'u') {
+        e.preventDefault();
+        return false;
+      }
+      
+      // Prevent Ctrl+Shift+C (Inspect Element)
+      if (e.ctrlKey && e.shiftKey && e.key === 'C') {
+        e.preventDefault();
+        return false;
+      }
+
+      // Prevent Ctrl+Shift+K (Firefox Console)
+      if (e.ctrlKey && e.shiftKey && e.key === 'K') {
+        e.preventDefault();
+        return false;
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+
+    // Disable console logs in production
+    if (import.meta.env.PROD) {
+      console.log = () => {};
+      console.debug = () => {};
+      console.info = () => {};
+      console.warn = () => {};
+      // Keep console.error for critical debugging
+    }
+
+    // Detect if DevTools is open (additional security layer)
+    const detectDevTools = () => {
+      const threshold = 160;
+      if (window.outerWidth - window.innerWidth > threshold || 
+          window.outerHeight - window.innerHeight > threshold) {
+        document.body.innerHTML = '<div style="display:flex;justify-content:center;align-items:center;height:100vh;font-size:24px;color:#ef4444;">⛔ Developer tools are not allowed during the interview.</div>';
+      }
+    };
+    const devToolsInterval = setInterval(detectDevTools, 1000);
+
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      document.removeEventListener('contextmenu', handleContextMenu);
+      document.removeEventListener('keydown', handleKeyDown);
+      clearInterval(devToolsInterval);
+    };
+  }, [location.pathname, isTestSubmitted]);
+
   useEffect(() => {
     if (!sessionId) return;
+
+    // Mark this browser as candidate session immediately
+    localStorage.setItem('candidateSession', sessionId);
+    localStorage.setItem('candidateSessionTime', Date.now().toString());
 
     const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
     console.log('🔌 Connecting to backend:', backendUrl);
@@ -486,6 +590,10 @@ public class RegistrationForm {
     if (timerRef.current) {
       clearInterval(timerRef.current);
     }
+    
+    // Mark this browser as candidate session (prevent access to other pages)
+    localStorage.setItem('candidateSession', sessionId || '');
+    localStorage.setItem('candidateSessionTime', Date.now().toString());
   };
 
   const formatTime = (seconds: number): string => {
