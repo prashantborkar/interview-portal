@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { useParams, useLocation } from 'react-router-dom';
 import { io, Socket } from 'socket.io-client';
 import { AlertCircle, Play, Terminal, AlertTriangle, Clock, Trophy } from 'lucide-react';
 import CodeEditor from '../components/CodeEditor';
@@ -18,7 +18,6 @@ interface SessionData {
 
 function CandidateInterview() {
   const { sessionId } = useParams<{ sessionId: string }>();
-  const navigate = useNavigate();
   const location = useLocation();
   const [socket, setSocket] = useState<Socket | null>(null);
   const [session, setSession] = useState<SessionData | null>(null);
