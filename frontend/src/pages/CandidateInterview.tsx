@@ -855,7 +855,7 @@ public class RegistrationForm {
                 
                 <div className="flex items-center justify-between gap-3">
                   <div className="text-lg font-bold text-gray-800">
-                    {getLanguageLabel(language)}
+                    {getLanguageLabel()}
                   </div>
                   <button
                     onClick={runCode}
