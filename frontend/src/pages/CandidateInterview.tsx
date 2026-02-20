@@ -21,11 +21,13 @@ function CandidateInterview() {
   const [socket, setSocket] = useState<Socket | null>(null);
   const [session, setSession] = useState<SessionData | null>(null);
   const [code, setCode] = useState('');
-  const [language, setLanguage] = useState('selenium-pageobject');
-  // Store code for each challenge separately
-  const [challengeCode, setChallengeCode] = useState<{ [key: string]: string }>({});
+  const [language, setLanguage] = useState('selenium-senior');
   const [output, setOutput] = useState('');
   const [isRunning, setIsRunning] = useState(false);
+  
+  // Store code for each challenge separately
+  const [challengeCode, setChallengeCode] = useState<{ [key: string]: string }>({});
+  
   const [error, setError] = useState('');
   const [pasteWarning, setPasteWarning] = useState(false);
   const editorContainerRef = useRef<HTMLDivElement>(null);
@@ -34,12 +36,154 @@ function CandidateInterview() {
   
   // Helper function to get challenge display name
   const getLanguageLabel = (lang: string): string => {
-    const labels: { [key: string]: string } = {
-      'selenium-pageobject': '🎭 Selenium - Page Object Model',
-      'selenium-waits': '⏳ Selenium - Waits & Synchronization',
-      'selenium-locators': '🎯 Selenium - Locator Strategy'
-    };
-    return labels[lang] || lang;
+    return 'Selenium WebDriver - Senior Automation Engineer (10 Bugs)';
+  };
+
+  // Get starter code with debugging challenge
+  const getStarterCode = (): string => {
+    return `// ═══════════════════════════════════════════════════════════════
+// NICE ACTIMIZE - SENIOR AUTOMATION ENGINEER TEST
+// Selenium WebDriver Debugging Challenge (7+ Years Experience)
+// Fix all 10 bugs across 3 real-world scenarios
+// Each bug is worth 1 point (Total: 10 points)
+// ═══════════════════════════════════════════════════════════════
+
+
+import org.openqa.selenium.*;
+import org.openqa.selenium.support.ui.*;
+import java.time.Duration;
+import java.util.List;
+
+// ═══════════════════════════════════════════════════════════════
+// SCENARIO 1: Login & Authentication (3 bugs)
+// ═══════════════════════════════════════════════════════════════
+
+public class SecureLoginPage {
+    private WebDriver driver;
+    private WebDriverWait wait;
+    
+    // Locators
+    private By usernameField = By.id("username");
+    private By passwordField = By.id("password");
+    private By loginButton = By.xpath("//button[@type='submit']");
+    private By errorMessage = By.className("error-msg");
+    private By successMessage = By.id("welcome-msg");
+    
+    public SecureLoginPage(WebDriver driver) {
+        this.driver = driver;
+        // BUG 1: WebDriverWait not initialized - causes NullPointerException
+    }
+    
+    public void enterCredentials(String username, String password) {
+        // BUG 2: Direct findElement without wait - fails on slow networks
+        driver.findElement(usernameField).sendKeys(username);
+        driver.findElement(passwordField).sendKeys(password);
+    }
+    
+    public void clickLogin() {
+        driver.findElement(loginButton).click();
+    }
+    
+    public String getErrorMessage() {
+        // BUG 3: No explicit wait for error message visibility
+        return driver.findElement(errorMessage).getText();
+    }
+    
+    public boolean isLoginSuccessful() {
+        return wait.until(ExpectedConditions.visibilityOfElementLocated(successMessage)).isDisplayed();
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// SCENARIO 2: Dynamic Content & Synchronization (4 bugs)
+// ═══════════════════════════════════════════════════════════════
+
+public class DynamicDashboard {
+    private WebDriver driver;
+    private WebDriverWait wait;
+    
+    public DynamicDashboard(WebDriver driver) {
+        this.driver = driver;
+        this.wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+    }
+    
+    public void loadUserProfile(String userId) {
+        driver.get("https://app.example.com/profile/" + userId);
+        
+        // BUG 4: Using Thread.sleep instead of explicit wait
+        try {
+            Thread.sleep(3000);  // BAD PRACTICE!
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+    
+    public void clickEditButton() {
+        // BUG 5: Not waiting for element to be clickable
+        WebElement editBtn = driver.findElement(By.id("edit-profile-btn"));
+        editBtn.click();
+    }
+    
+    public boolean isDataLoaded() {
+        // BUG 6: Missing wait for AJAX call completion
+        WebElement dataTable = driver.findElement(By.id("profile-data"));
+        return dataTable.isDisplayed();
+    }
+    
+    public int getNotificationCount() {
+        // BUG 7: Element might not be present in DOM yet
+        WebElement badge = driver.findElement(By.className("notification-badge"));
+        return Integer.parseInt(badge.getText());
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// SCENARIO 3: Complex Form Handling (3 bugs)
+// ═══════════════════════════════════════════════════════════════
+
+public class RegistrationForm {
+    private WebDriver driver;
+    private WebDriverWait wait;
+    
+    public RegistrationForm(WebDriver driver) {
+        this.driver = driver;
+        this.wait = new WebDriverWait(driver, Duration.ofSeconds(15));
+    }
+    
+    public void fillUserDetails(String name, String email, String phone) {
+        // BUG 8: Fragile absolute XPath - breaks when UI structure changes
+        WebElement nameField = driver.findElement(
+            By.xpath("/html/body/div[1]/div[2]/form/div[1]/input")
+        );
+        nameField.sendKeys(name);
+        
+        // BUG 9: Index-based CSS selector - unreliable
+        WebElement emailField = driver.findElement(
+            By.cssSelector("input:nth-child(2)")
+        );
+        emailField.sendKeys(email);
+        
+        // Use stable locator for phone (CORRECT)
+        driver.findElement(By.id("phone")).sendKeys(phone);
+    }
+    
+    public void selectCountry(String country) {
+        Select countryDropdown = new Select(driver.findElement(By.id("country")));
+        countryDropdown.selectByVisibleText(country);
+    }
+    
+    public void submitForm() {
+        // BUG 10: Using link text that's locale-dependent
+        WebElement submitBtn = driver.findElement(
+            By.linkText("Submit Registration")
+        );
+        submitBtn.click();
+    }
+    
+    public boolean isRegistrationSuccessful() {
+        return wait.until(ExpectedConditions.urlContains("/success"));
+    }
+}`;
   };
   
   // Timer and scoring state
@@ -50,7 +194,6 @@ function CandidateInterview() {
   const [isTestSubmitted, setIsTestSubmitted] = useState(false);
   const [completedChallenges, setCompletedChallenges] = useState<Set<string>>(new Set());
   const timerRef = useRef<NodeJS.Timeout | null>(null);
-  const isSwitchingChallenge = useRef<boolean>(false); // Prevent onChange during switch
   
   // Individual bug tracking
   interface BugResult {
@@ -63,68 +206,36 @@ function CandidateInterview() {
 
   // Clean up invalid challenges on mount (only 3 Selenium challenges allowed)
   useEffect(() => {
-    const validChallenges = ['selenium-pageobject', 'selenium-waits', 'selenium-locators'];
-    
-    // Restore challengeCode from localStorage on mount (for page refresh)
+    // Always initialize with fresh starter code
     if (sessionId) {
-      const savedChallengeCode = localStorage.getItem(`challengeCode_${sessionId}`);
-      if (savedChallengeCode) {
-        try {
-          const parsed = JSON.parse(savedChallengeCode);
-          // Only restore if it has valid challenges
-          const validKeys = Object.keys(parsed).filter(k => validChallenges.includes(k));
-          if (validKeys.length > 0) {
-            console.log('Restored challenge code from localStorage:', validKeys);
-            setChallengeCode(parsed);
-          } else {
-            console.log('No valid challenge code in localStorage, starting fresh');
-            localStorage.removeItem(`challengeCode_${sessionId}`);
-          }
-        } catch (e) {
-          console.error('Failed to parse saved challenge code:', e);
-          localStorage.removeItem(`challengeCode_${sessionId}`);
-        }
-      }
-      
-      // Restore test results from localStorage
-      const savedBugResults = localStorage.getItem(`bugResults_${sessionId}`);
-      if (savedBugResults) {
-        try {
-          const parsed = JSON.parse(savedBugResults);
-          console.log('Restored bug results from localStorage');
-          setBugResults(parsed);
-        } catch (e) {
-          console.error('Failed to parse saved bug results:', e);
-          localStorage.removeItem(`bugResults_${sessionId}`);
-        }
-      }
-      
-      // Restore total points from localStorage
-      const savedTotalPoints = localStorage.getItem(`totalPoints_${sessionId}`);
-      if (savedTotalPoints) {
-        const points = parseFloat(savedTotalPoints);
-        console.log('Restored total points from localStorage:', points);
-        setTotalPoints(points);
-      }
+      const starterCode = getStarterCode();
+      console.log('Loading fresh starter code');
+      setCode(starterCode);
     }
   }, [sessionId]);
 
   useEffect(() => {
     if (!sessionId) return;
 
-    const newSocket = io(import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000');
+    const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+    console.log('🔌 Connecting to backend:', backendUrl);
+    const newSocket = io(backendUrl);
     setSocket(newSocket);
 
     newSocket.on('connect', () => {
-      console.log('Connected to server');
+      console.log('✅ Connected to server');
       newSocket.emit('join-session', sessionId);
+    });
+
+    newSocket.on('connect_error', (error) => {
+      console.error('❌ Connection error:', error);
     });
 
     newSocket.on('session-data', (data: SessionData) => {
       setSession(data);
       
       // Set the language first
-      const currentLanguage = data.language || 'selenium-pageobject';
+      const currentLanguage = data.language || 'selenium-senior';
       setLanguage(currentLanguage);
       
       // Restore timer state from server (handle page refresh)
@@ -141,71 +252,10 @@ function CandidateInterview() {
         console.log('Restored coding time:', data.codingTimeRemaining);
       }
       
-      // Check if session has existing code (from previous work or interviewer edits)
-      if (data.code && data.code !== '// Select a debugging challenge from the dropdown above') {
-        // Load existing code from session (persisted state)
-        setCode(data.code);
-      } else {
-        // New session - load the starter code for default language immediately
-        console.log('New session - loading starter code for:', currentLanguage);
-        
-        // For first load, directly call the code load logic without early return check
-        const starterCode = currentLanguage === 'selenium-pageobject' ? `// DEBUGGING CHALLENGE: Page Object Pattern Bug
-// SCENARIO: Login page automation is failing intermittently
-// ISSUE: Tests fail with "Element not found" even though element exists
-// YOUR TASK: Fix the bug(s) in this Page Object implementation
-
-import org.openqa.selenium.By;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebElement;
-import org.openqa.selenium.support.ui.WebDriverWait;
-import org.openqa.selenium.support.ui.ExpectedConditions;
-import java.time.Duration;
-
-public class LoginPage {
-    private WebDriver driver;
-    private WebDriverWait wait;
-    
-    // Locators
-    private By usernameField = By.id("username");
-    private By passwordField = By.id("password");
-    private By loginButton = By.xpath("//button[@type='submit']");
-    private By errorMessage = By.className("error-msg");
-    
-    public LoginPage(WebDriver driver) {
-        this.driver = driver;
-        // BUG 1: Missing WebDriverWait initialization
-    }
-    
-    // BUG 2: This method doesn't wait for page to load
-    public void login(String username, String password) {
-        driver.findElement(usernameField).sendKeys(username);
-        driver.findElement(passwordField).sendKeys(password);
-        driver.findElement(loginButton).click();
-    }
-    
-    // BUG 3: No wait condition for error message
-    public String getErrorMessage() {
-        return driver.findElement(errorMessage).getText();
-    }
-    
-    public boolean isLoginButtonDisplayed() {
-        return driver.findElement(loginButton).isDisplayed();
-    }
-}
-
-// EXPECTED FIX:
-// 1. Initialize WebDriverWait in constructor
-// 2. Add explicit waits in login() method
-// 3. Use ExpectedConditions.elementToBeClickable()
-// 4. Add wait for error message visibility` : '';
-        
-        setCode(starterCode);
-        setChallengeCode(prev => ({
-          ...prev,
-          [currentLanguage]: starterCode
-        }));
-      }
+      // Always load fresh starter code (ignore session code)
+      console.log('Loading fresh starter code for:', currentLanguage);
+      const starterCode = getStarterCode();
+      setCode(starterCode);
     });
 
     newSocket.on('session-not-found', () => {
@@ -235,15 +285,12 @@ public class LoginPage {
       const testLines = output.split('\n');
       
       testLines.forEach((line, index) => {
-        // Match test name line like "Test 1: Test 1 (BUG 1): Fix WebDriverWait Initialization"
-        const testNameMatch = line.match(/Test \d+: Test (\d+) \(BUG (\d+)\):/);
-        if (testNameMatch) {
-          const bugNumber = Number.parseInt(testNameMatch[2]);
-          
-          // Check the next line for PASS/FAIL status
-          const nextLine = testLines[index + 1] || '';
-          const passed = nextLine.includes('✅ PASS');
-          const bugPoints = passed ? 2.5 : 0;
+        // Match lines like "  ✅ BUG 1: PASS [1.0 point]" or "  ❌ BUG 2: FAIL [0.0 point]"
+        const bugMatch = line.match(/[✅❌]\s*BUG\s*(\d+):\s*(PASS|FAIL)/);
+        if (bugMatch) {
+          const bugNumber = Number.parseInt(bugMatch[1]);
+          const passed = bugMatch[2] === 'PASS';
+          const bugPoints = passed ? 1.0 : 0; // Each bug is worth 1 point (10 bugs = 10 points)
           
           bugTestResults.push({
             bugNumber,
@@ -266,12 +313,6 @@ public class LoginPage {
           // Cap at 10 points maximum
           const cappedTotal = Math.min(total, 10);
           setTotalPoints(cappedTotal);
-          
-          // Persist test results to localStorage
-          if (sessionId) {
-            localStorage.setItem(`bugResults_${sessionId}`, JSON.stringify(updatedResults));
-            localStorage.setItem(`totalPoints_${sessionId}`, cappedTotal.toString());
-          }
           
           return updatedResults;
         });
@@ -401,222 +442,12 @@ public class LoginPage {
   }, [socket, sessionId]);
 
   const handleCodeChange = (newCode: string) => {
-    // Don't save during challenge switch to prevent overwriting
-    if (isSwitchingChallenge.current) {
-      console.log('⏸️ Ignoring code change during challenge switch');
-      return;
-    }
-    
-    setCode(newCode);
-    // Save code for current challenge
-    const updated = {
-      ...challengeCode,
-      [language]: newCode
-    };
-    setChallengeCode(updated);
-    
-    // Persist to localStorage for page refresh
-    if (sessionId) {
-      localStorage.setItem(`challengeCode_${sessionId}`, JSON.stringify(updated));
-    }
-    
-    if (socket && sessionId) {
-      console.log('Sending code update:', newCode.substring(0, 50));
-      socket.emit('code-change', { sessionId, code: newCode, language });
-    }
-  };
-
-  // Helper function to load starter code for a challenge (without changing language state)
-  // Simple function to switch to a challenge and load its code
-  const switchToChallenge = (challengeName: string) => {
-    console.log('🔄 SWITCH TO:', challengeName, '(from:', language, ')');
-    
-    // Same tab? Do nothing
-    if (language === challengeName) {
-      return;
-    }
-    
-    // Block onChange temporarily
-    isSwitchingChallenge.current = true;
-    
-    // Update language first
-    setLanguage(challengeName);
-    
-    // Load the correct starter code based on challenge
-    let newCode = '';
-    
-    if (challengeName === 'selenium-pageobject') {
-      newCode = `// DEBUGGING CHALLENGE: Page Object Pattern Bug
-// SCENARIO: Login page automation is failing intermittently
-// ISSUE: Tests fail with "Element not found" even though element exists
-// YOUR TASK: Fix the bug(s) in this Page Object implementation
-
-import org.openqa.selenium.By;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebElement;
-import org.openqa.selenium.support.ui.WebDriverWait;
-import org.openqa.selenium.support.ui.ExpectedConditions;
-import java.time.Duration;
-
-public class LoginPage {
-    private WebDriver driver;
-    private WebDriverWait wait;
-    
-    // Locators
-    private By usernameField = By.id("username");
-    private By passwordField = By.id("password");
-    private By loginButton = By.xpath("//button[@type='submit']");
-    private By errorMessage = By.className("error-msg");
-    
-    public LoginPage(WebDriver driver) {
-        this.driver = driver;
-        // BUG 1: Missing WebDriverWait initialization
-    }
-    
-    // BUG 2: This method doesn't wait for page to load
-    public void login(String username, String password) {
-        driver.findElement(usernameField).sendKeys(username);
-        driver.findElement(passwordField).sendKeys(password);
-        driver.findElement(loginButton).click();
-    }
-    
-    // BUG 3: No wait condition for error message
-    public String getErrorMessage() {
-        return driver.findElement(errorMessage).getText();
-    }
-    
-    public boolean isLoginButtonDisplayed() {
-        return driver.findElement(loginButton).isDisplayed();
-    }
-}
-
-// EXPECTED FIX:
-// 1. Initialize WebDriverWait in constructor
-// 2. Add explicit waits in login() method
-// 3. Use ExpectedConditions.elementToBeClickable()
-// 4. Add wait for error message visibility`;
-    } else if (challengeName === 'selenium-waits') {
-      newCode = `// DEBUGGING CHALLENGE: Wait Conditions Bug
-// SCENARIO: E-commerce cart page test failing randomly
-// ISSUE: Test tries to interact with elements before they're ready
-// YOUR TASK: Fix the wait strategy to make test stable
-
-import org.openqa.selenium.By;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebElement;
-import org.openqa.selenium.support.ui.WebDriverWait;
-import org.openqa.selenium.support.ui.ExpectedConditions;
-import java.time.Duration;
-
-public class ShoppingCartTest {
-    private WebDriver driver;
-    private WebDriverWait wait;
-    
-    public ShoppingCartTest(WebDriver driver) {
-        this.driver = driver;
-        this.wait = new WebDriverWait(driver, Duration.ofSeconds(10));
-    }
-    
-    public void addProductToCart(String productId) {
-        // BUG 1: Using Thread.sleep instead of explicit wait
-        WebElement addButton = driver.findElement(
-            By.id("add-to-cart-" + productId)
-        );
-        try {
-            Thread.sleep(2000); // BAD PRACTICE!
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        // BUG 2: Not using elementToBeClickable wait before clicking
-        addButton.click();
-    }
-    
-    public boolean isProductInCart(String productName) {
-        // BUG 3: Not waiting for cart to update
-        WebElement cartItems = driver.findElement(By.id("cart-items"));
-        return cartItems.getText().contains(productName);
-    }
-    
-    public int getCartItemCount() {
-        // BUG 4: Element might not be present yet
-        WebElement badge = driver.findElement(By.className("cart-badge"));
-        return Integer.parseInt(badge.getText());
-    }
-}
-
-// EXPECTED FIX:
-// 1. Replace Thread.sleep with WebDriverWait
-// 2. Use ExpectedConditions.elementToBeClickable() before clicking
-// 3. Wait for cart update using .textToBePresentInElement()
-// 4. Add presence wait for cart badge element`;
-    } else if (challengeName === 'selenium-locators') {
-      newCode = `// DEBUGGING CHALLENGE: Locator Strategy Bug
-// SCENARIO: Form automation breaking after UI updates
-// ISSUE: Tests fail when developers change HTML structure
-// YOUR TASK: Fix fragile locators to be more robust
-
-import org.openqa.selenium.By;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebElement;
-
-public class RegistrationFormPage {
-    private WebDriver driver;
-    
-    public RegistrationFormPage(WebDriver driver) {
-        this.driver = driver;
-    }
-    
-    public void fillRegistrationForm(String name, String email, String phone) {
-        // BUG 1: Using absolute XPath - breaks when structure changes
-        WebElement nameField = driver.findElement(
-            By.xpath("/html/body/div[1]/div[2]/form/div[1]/input")
-        );
-        nameField.sendKeys(name);
-        
-        // BUG 2: Using index-based locator
-        WebElement emailField = driver.findElement(
-            By.cssSelector("input:nth-child(2)")
-        );
-        emailField.sendKeys(email);
-        
-        // BUG 3: Using text-based XPath in English - fails in other locales
-        WebElement phoneField = driver.findElement(
-            By.xpath("//label[contains(text(),'Phone Number')]/following-sibling::input")
-        );
-        phoneField.sendKeys(phone);
-    }
-    
-    public void submitForm() {
-        // BUG 4: Using link text that might change
-        WebElement submitBtn = driver.findElement(
-            By.linkText("Submit Registration")
-        );
-        submitBtn.click();
-    }
-}
-
-// EXPECTED FIX: Use stable locators like:
-// - By.id("name"), By.id("email"), By.id("phone")
-// - By.name("fullName"), By.name("email"), By.name("phoneNumber")
-// - By.cssSelector("[data-testid='submit-button']")
-// - Relative XPath: //input[@id='name'], //button[@type='submit']`;
-    }
-    
-    console.log('✅ LOADED CODE LENGTH:', newCode.length, 'for', challengeName);
-    
-    // Set the code immediately
     setCode(newCode);
     
     // Notify backend
     if (socket && sessionId) {
-      socket.emit('language-change', { sessionId, language: challengeName });
-      socket.emit('code-change', { sessionId, code: newCode, language: challengeName });
+      socket.emit('code-change', { sessionId, code: newCode, language: 'selenium-senior' });
     }
-    
-    // Re-enable onChange after short delay
-    setTimeout(() => {
-      isSwitchingChallenge.current = false;
-    }, 150);
   };
 
   const runCode = () => {
@@ -625,28 +456,15 @@ public class RegistrationFormPage {
       return;
     }
     
-    // CRITICAL: Ensure we're using the correct code for current language
-    const currentCode = challengeCode[language] || code;
-    
     setIsRunning(true);
     setOutput('⏳ Running test suite...\n');
 
-    console.log('=== RUNNING TESTS ===' );
-    console.log('Current language:', language);
-    console.log('Code state length:', code.length);
-    console.log('Challenge code length:', challengeCode[language]?.length || 0);
-    console.log('Using code length:', currentCode.length);
-    console.log('Code preview (first 200 chars):', currentCode.substring(0, 200));
-    console.log('Code contains "BUG 1"?:', currentCode.includes('BUG 1'));
-    console.log('Code contains "BUG 2"?:', currentCode.includes('BUG 2'));
-    console.log('Code contains "Optional.of"?:', currentCode.includes('Optional.of'));
-    console.log('Code contains "MockitoAnnotations.openMocks"?:', currentCode.includes('MockitoAnnotations.openMocks'));
-    console.log('Challenge code stored:', Object.keys(challengeCode));
+    console.log('=== RUNNING TESTS ===');
+    console.log('Code length:', code.length);
     
-    // Send CURRENT CHALLENGE CODE to backend for test execution
-    socket.emit('execute-code', { sessionId, code: currentCode, language });
+    // Send code to backend for test execution
+    socket.emit('execute-code', { sessionId, code, language: 'selenium-senior' });
   };
-
   const handleSubmitTest = () => {
     // Send results to interviewer BEFORE changing state
     if (socket && sessionId) {
@@ -913,11 +731,36 @@ public class RegistrationFormPage {
                   style={{ width: `${(totalPoints / 10) * 100}%` }}
                 ></div>
               </div>
-              <div className="flex items-center justify-between text-xs">
+              
+              {/* Individual Bug Status Grid */}
+              <div className="mt-3 mb-2">
+                <div className="text-xs font-semibold text-gray-600 mb-2">Bug Status (Each = 1 point):</div>
+                <div className="grid grid-cols-10 gap-1">
+                  {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(bugNum => {
+                    const bugResult = Object.values(bugResults).flat().find(b => b.bugNumber === bugNum);
+                    const isPassed = bugResult?.passed || false;
+                    return (
+                      <div
+                        key={bugNum}
+                        className={`p-1.5 rounded text-center font-bold text-xs transition-all duration-300 ${
+                          isPassed
+                            ? 'bg-green-500 text-white shadow-md transform scale-105'
+                            : 'bg-gray-300 text-gray-600'
+                        }`}
+                        title={isPassed ? `Bug ${bugNum}: Fixed ✓ (+1.0 pt)` : `Bug ${bugNum}: Not fixed yet`}
+                      >
+                        {bugNum}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+              
+              <div className="flex items-center justify-between text-xs mt-2">
                 <span className="font-semibold text-green-700">
-                  ✓ {Object.values(bugResults).flat().filter(b => b.passed).length} bugs fixed
+                  ✓ {Object.values(bugResults).flat().filter(b => b.passed).length}/10 bugs fixed
                 </span>
-                <span className="text-gray-600">💎 Each bug = 2.5 pts</span>
+                <span className="text-gray-600">💎 1 bug = 1 point</span>
               </div>
               {totalPoints > 0 && (
                 <div className="mt-2 text-center">
@@ -959,108 +802,17 @@ public class RegistrationFormPage {
             </div>
 
             <div className="space-y-4">
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <h3 className="text-lg font-semibold text-blue-900 mb-3 flex items-center gap-2">
-                  <Code className="w-5 h-5" />
-                  Available Challenges
-                </h3>
-                <div className="space-y-3 text-sm">
-                  <div 
-                    onClick={() => !isInstructionPhase && switchToChallenge('selenium-pageobject')}
-                    className={`p-3 rounded border cursor-pointer transition-all hover:shadow-md ${
-                    language === 'selenium-pageobject' ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-300' :
-                    completedChallenges.has('selenium-pageobject') 
-                      ? 'bg-green-50 border-green-500' 
-                      : 'bg-white border-blue-200 hover:border-blue-400'
-                  } ${isInstructionPhase ? 'opacity-50 cursor-not-allowed' : ''}`}>
-                    <p className="font-bold text-blue-900 flex items-center justify-between">
-                      <span>🔍 Selenium - Page Object Bug</span>
-                      {completedChallenges.has('selenium-pageobject') && <span className="text-green-600 text-lg">✓</span>}
-                    </p>
-                    <p className="text-gray-600 mt-1 text-xs">Fix missing WebDriverWait and explicit wait conditions</p>
-                    {bugResults['selenium-pageobject'] && (
-                      <div className="flex gap-1 mt-2">
-                        {bugResults['selenium-pageobject'].map((bug) => (
-                          <span
-                            key={bug.bugNumber}
-                            className={`text-xs px-2 py-1 rounded ${
-                              bug.passed ? 'bg-green-200 text-green-800' : 'bg-gray-200 text-gray-600'
-                            }`}
-                          >
-                            B{bug.bugNumber}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                  <div 
-                    onClick={() => !isInstructionPhase && switchToChallenge('selenium-waits')}
-                    className={`p-3 rounded border cursor-pointer transition-all hover:shadow-md ${
-                    language === 'selenium-waits' ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-300' :
-                    completedChallenges.has('selenium-waits') 
-                      ? 'bg-green-50 border-green-500' 
-                      : 'bg-white border-blue-200 hover:border-blue-400'
-                  } ${isInstructionPhase ? 'opacity-50 cursor-not-allowed' : ''}`}>
-                    <p className="font-bold text-blue-900 flex items-center justify-between">
-                      <span>⏱️ Selenium - Wait Conditions</span>
-                      {completedChallenges.has('selenium-waits') && <span className="text-green-600 text-lg">✓</span>}
-                    </p>
-                    <p className="text-gray-600 mt-1 text-xs">Replace Thread.sleep with proper ExpectedConditions</p>
-                    {bugResults['selenium-waits'] && (
-                      <div className="flex gap-1 mt-2">
-                        {bugResults['selenium-waits'].map((bug) => (
-                          <span
-                            key={bug.bugNumber}
-                            className={`text-xs px-2 py-1 rounded ${
-                              bug.passed ? 'bg-green-200 text-green-800' : 'bg-gray-200 text-gray-600'
-                            }`}
-                          >
-                            B{bug.bugNumber}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                  <div 
-                    onClick={() => !isInstructionPhase && switchToChallenge('selenium-locators')}
-                    className={`p-3 rounded border cursor-pointer transition-all hover:shadow-md ${
-                    language === 'selenium-locators' ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-300' :
-                    completedChallenges.has('selenium-locators') 
-                      ? 'bg-green-50 border-green-500' 
-                      : 'bg-white border-blue-200 hover:border-blue-400'
-                  } ${isInstructionPhase ? 'opacity-50 cursor-not-allowed' : ''}`}>
-                    <p className="font-bold text-blue-900 flex items-center justify-between">
-                      <span>🎯 Selenium - Locator Strategy</span>
-                      {completedChallenges.has('selenium-locators') && <span className="text-green-600 text-lg">✓</span>}
-                    </p>
-                    <p className="text-gray-600 mt-1 text-xs">Fix fragile XPath and use stable locators</p>
-                    {bugResults['selenium-locators'] && (
-                      <div className="flex gap-1 mt-2">
-                        {bugResults['selenium-locators'].map((bug) => (
-                          <span
-                            key={bug.bugNumber}
-                            className={`text-xs px-2 py-1 rounded ${
-                              bug.passed ? 'bg-green-200 text-green-800' : 'bg-gray-200 text-gray-600'
-                            }`}
-                          >
-                            B{bug.bugNumber}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
+              {/* Challenge Selector Removed - All scenarios now in one code block */}
 
               <div className="bg-green-50 border border-green-200 rounded-lg p-4">
                 <h3 className="text-lg font-semibold text-green-900 mb-2">📝 Instructions</h3>
                 <ol className="list-decimal list-inside space-y-2 text-sm text-gray-700">
-                  <li><strong>Click a challenge</strong> from the list above to load its code</li>
-                  <li>Read the code comments - they explain the bugs</li>
-                  <li>Identify all issues (usually 2-4 bugs per challenge)</li>
-                  <li>Fix the bugs in the code editor</li>
+                  <li>Read through all 3 test scenarios in the code editor</li>
+                  <li>Each scenario explains the bugs in comments</li>
+                  <li>Identify and fix ALL bugs across all 3 scenarios</li>
                   <li>Click "Run Tests" to validate your fixes</li>
                   <li>All tests must pass to complete the challenge</li>
+                  <li>Total of 11 bugs to find and fix!</li>
                 </ol>
               </div>
 

@@ -83,6 +83,367 @@ interface TestResult {
 function analyzeDebugFixes(code: string, language: string): TestResult[] {
   const results: TestResult[] = [];
 
+  // Handle Selenium Senior Automation Engineer Challenge - 10 bugs
+  if (language === 'selenium-senior') {
+    // === SCENARIO 1: Login & Authentication (3 bugs) ===
+    
+    // BUG 1: Check for WebDriverWait initialization in SecureLoginPage constructor
+    const hasWaitInit = code.match(/public\s+SecureLoginPage\([^)]*\)\s*{[^}]*this\.wait\s*=\s*new\s+WebDriverWait/s);
+    results.push({
+      name: 'BUG 1',
+      passed: !!hasWaitInit,
+      message: hasWaitInit 
+        ? '✅ PASS - WebDriverWait initialized in SecureLoginPage constructor' 
+        : '❌ FAIL - Add "this.wait = new WebDriverWait(driver, Duration.ofSeconds(10));" in constructor'
+    });
+
+    // BUG 2: Check for explicit waits in enterCredentials method
+    const enterMethod = code.match(/public\s+void\s+enterCredentials\([^)]*\)\s*{([^}]+)}/s);
+    const enterMethodCode = enterMethod ? enterMethod[1] : '';
+    const hasWaitInEnter = enterMethodCode.includes('wait.until') && 
+                          (enterMethodCode.includes('visibilityOfElementLocated') || enterMethodCode.includes('elementToBeClickable')) &&
+                          !enterMethodCode.includes('driver.findElement(usernameField)') &&
+                          !enterMethodCode.includes('driver.findElement(passwordField)');
+    results.push({
+      name: 'BUG 2',
+      passed: !!hasWaitInEnter,
+      message: hasWaitInEnter 
+        ? '✅ PASS - Explicit waits added in enterCredentials method' 
+        : '❌ FAIL - Replace driver.findElement with wait.until(ExpectedConditions.visibilityOfElementLocated(...))'
+    });
+
+    // BUG 3: Check for explicit wait in getErrorMessage method
+    const errorMethod = code.match(/public\s+String\s+getErrorMessage\([^)]*\)\s*{([^}]+)}/s);
+    const errorMethodCode = errorMethod ? errorMethod[1] : '';
+    const hasWaitInError = errorMethodCode.includes('wait.until') && 
+                          errorMethodCode.includes('visibilityOfElementLocated') &&
+                          !errorMethodCode.includes('driver.findElement(errorMessage).getText()');
+    results.push({
+      name: 'BUG 3',
+      passed: !!hasWaitInError,
+      message: hasWaitInError 
+        ? '✅ PASS - Explicit wait added for error message visibility' 
+        : '❌ FAIL - Add wait.until(ExpectedConditions.visibilityOfElementLocated(errorMessage)) before getText()'
+    });
+
+    // === SCENARIO 2: Dynamic Content & Synchronization (4 bugs) ===
+    
+    // BUG 4: Check Thread.sleep is removed AND replaced with wait.until
+    const loadMethod = code.match(/public\s+void\s+loadUserProfile\([^)]*\)\s*{([^}]+)}/s);
+    const loadMethodCode = loadMethod ? loadMethod[1] : '';
+    const hasNoThreadSleep = !loadMethodCode.includes('Thread.sleep') && loadMethodCode.includes('wait.until');
+    results.push({
+      name: 'BUG 4',
+      passed: hasNoThreadSleep,
+      message: hasNoThreadSleep 
+        ? '✅ PASS - Thread.sleep removed and replaced with proper wait' 
+        : '❌ FAIL - Remove Thread.sleep and add wait.until(ExpectedConditions.visibilityOfElementLocated(...))'
+    });
+
+    // BUG 5: Check for elementToBeClickable in clickEditButton
+    const clickMethod = code.match(/public\s+void\s+clickEditButton\([^)]*\)\s*{([^}]+)}/s);
+    const clickMethodCode = clickMethod ? clickMethod[1] : '';
+    const hasClickableWait = clickMethodCode.includes('wait.until') && 
+                            clickMethodCode.includes('elementToBeClickable') &&
+                            !clickMethodCode.includes('driver.findElement(By.id("edit-profile-btn")).click()');
+    results.push({
+      name: 'BUG 5',
+      passed: !!hasClickableWait,
+      message: hasClickableWait 
+        ? '✅ PASS - elementToBeClickable wait added in clickEditButton' 
+        : '❌ FAIL - Use wait.until(ExpectedConditions.elementToBeClickable(...)) before clicking'
+    });
+
+    // BUG 6: Check for explicit wait in isDataLoaded
+    const dataMethod = code.match(/public\s+boolean\s+isDataLoaded\([^)]*\)\s*{([^}]+)}/s);
+    const dataMethodCode = dataMethod ? dataMethod[1] : '';
+    const hasWaitInDataLoaded = dataMethodCode.includes('wait.until') && 
+                               dataMethodCode.includes('visibilityOfElementLocated') &&
+                               !dataMethodCode.includes('driver.findElement(By.id("profile-data"))');
+    results.push({
+      name: 'BUG 6',
+      passed: !!hasWaitInDataLoaded,
+      message: hasWaitInDataLoaded 
+        ? '✅ PASS - Explicit wait added in isDataLoaded for AJAX completion' 
+        : '❌ FAIL - Add wait.until(ExpectedConditions.visibilityOfElementLocated(...)) before checking display'
+    });
+
+    // BUG 7: Check for explicit wait in getNotificationCount
+    const notifMethod = code.match(/public\s+int\s+getNotificationCount\([^)]*\)\s*{([^}]+)}/s);
+    const notifMethodCode = notifMethod ? notifMethod[1] : '';
+    const hasWaitInNotification = notifMethodCode.includes('wait.until') && 
+                                 notifMethodCode.includes('presenceOfElementLocated') &&
+                                 !notifMethodCode.includes('driver.findElement(By.className("notification-badge"))');
+    results.push({
+      name: 'BUG 7',
+      passed: !!hasWaitInNotification,
+      message: hasWaitInNotification 
+        ? '✅ PASS - Explicit wait added for notification badge presence' 
+        : '❌ FAIL - Add wait.until(ExpectedConditions.presenceOfElementLocated(...)) before getText()'
+    });
+
+    // === SCENARIO 3: Complex Form Handling (3 bugs) ===
+    
+    // BUG 8: Check absolute XPath is replaced with stable locator
+    const fillMethod = code.match(/public\s+void\s+fillUserDetails\([^)]*\)\s*{([^}]+)}/s);
+    const fillMethodCode = fillMethod ? fillMethod[1] : '';
+    const hasNoAbsoluteXPath = !fillMethodCode.includes('/html/body/div[1]/div[2]/form/div[1]/input') &&
+                              (fillMethodCode.includes('By.id("name")') || fillMethodCode.includes('By.name('));
+    results.push({
+      name: 'BUG 8',
+      passed: hasNoAbsoluteXPath,
+      message: hasNoAbsoluteXPath 
+        ? '✅ PASS - Absolute XPath replaced with stable locator (By.id or By.name)' 
+        : '❌ FAIL - Replace absolute XPath with By.id("name") or By.name("fullName")'
+    });
+
+    // BUG 9: Check nth-child selector is replaced
+    const hasNoNthChild = !fillMethodCode.includes('nth-child(2)') &&
+                         (fillMethodCode.includes('By.id("email")') || fillMethodCode.includes('By.name('));
+    results.push({
+      name: 'BUG 9',
+      passed: hasNoNthChild,
+      message: hasNoNthChild 
+        ? '✅ PASS - Index-based CSS selector replaced with stable locator' 
+        : '❌ FAIL - Replace nth-child selector with By.id("email") or By.name("emailAddress")'
+    });
+
+    // BUG 10: Check linkText is replaced with stable locator
+    const submitMethod = code.match(/public\s+void\s+submitForm\([^)]*\)\s*{([^}]+)}/s);
+    const submitMethodCode = submitMethod ? submitMethod[1] : '';
+    const hasNoLinkText = !submitMethodCode.includes('By.linkText("Submit Registration")') &&
+                         (submitMethodCode.includes('By.id') || submitMethodCode.includes('button[type=') || submitMethodCode.includes('data-testid'));
+    results.push({
+      name: 'BUG 10',
+      passed: hasNoLinkText,
+      message: hasNoLinkText 
+        ? '✅ PASS - linkText replaced with stable, locale-independent locator' 
+        : '❌ FAIL - Replace By.linkText with By.id("submit-btn") or By.cssSelector("button[type=\'submit\']")'
+    });
+
+    return results;
+  }
+
+  // Handle Java Calculator Challenge - 8 bugs
+  if (language === 'java-calculator') {
+    // BUG 1: Addition should use + operator
+    const hasCorrectAdd = code.includes('a + b') && code.match(/public\s+double\s+add\([^)]*\)\s*{[^}]*a\s*\+\s*b/s);
+    results.push({
+      name: 'BUG 1',
+      passed: !!hasCorrectAdd,
+      message: hasCorrectAdd 
+        ? '\u2705 PASS - Addition uses correct + operator (a + b)' 
+        : '\u274C FAIL - Change "a - b" to "a + b" in add() method'
+    });
+
+    // BUG 2: Subtraction should be a - b (not b - a)
+    const hasCorrectSubtract = code.match(/public\s+double\s+subtract\([^)]*\)\s*{[^}]*a\s*-\s*b/s) && !code.match(/public\s+double\s+subtract\([^)]*\)\s*{[^}]*b\s*-\s*a/s);
+    results.push({
+      name: 'BUG 2',
+      passed: !!hasCorrectSubtract,
+      message: hasCorrectSubtract 
+        ? '\u2705 PASS - Subtraction uses correct order (a - b)' 
+        : '\u274C FAIL - Change "b - a" to "a - b" in subtract() method'
+    });
+
+    // BUG 3: Multiply must return result
+    const hasMultiplyReturn = code.match(/public\s+double\s+multiply\([^)]*\)\s*{[^}]*return\s+result/s);
+    results.push({
+      name: 'BUG 3',
+      passed: !!hasMultiplyReturn,
+      message: hasMultiplyReturn 
+        ? '\u2705 PASS - multiply() returns result' 
+        : '\u274C FAIL - Add "return result;" at end of multiply() method'
+    });
+
+    // BUG 4: Division should check for zero
+    const hasDivideCheck = code.match(/public\s+double\s+divide\([^)]*\)\s*{[^}]*(if\s*\(\s*b\s*==\s*0|if\s*\(\s*0\s*==\s*b)/s);
+    results.push({
+      name: 'BUG 4',
+      passed: !!hasDivideCheck,
+      message: hasDivideCheck 
+        ? '\u2705 PASS - divide() checks for division by zero' 
+        : '\u274C FAIL - Add "if (b == 0) throw new ArithmeticException()" before dividing'
+    });
+
+    // BUG 5: Power should use exponent, not exponent + 1
+    const hasCorrectPower = code.match(/Math\.pow\([^,]+,\s*exponent\s*\)/s) && !code.match(/Math\.pow\([^,]+,\s*exponent\s*\+\s*1\s*\)/s);
+    results.push({
+      name: 'BUG 5',
+      passed: !!hasCorrectPower,
+      message: hasCorrectPower 
+        ? '\u2705 PASS - power() uses correct exponent value' 
+        : '\u274C FAIL - Remove "+ 1" from exponent in Math.pow()'
+    });
+
+    // BUG 6: Average should divide by numbers.length, not numbers.length - 1
+    const hasCorrectAverage = code.match(/public\s+double\s+average\([^)]*\)\s*{[^}]*sum\s*\/\s*numbers\.length(?!\s*-\s*1)/s);
+    results.push({
+      name: 'BUG 6',
+      passed: !!hasCorrectAverage,
+      message: hasCorrectAverage 
+        ? '\u2705 PASS - average() divides by correct array length' 
+        : '\u274C FAIL - Remove "- 1" from denominator in average() method'
+    });
+
+    // BUG 7: findMax should use > operator, not <
+    const hasCorrectMax = code.match(/public\s+double\s+findMax\([^)]*\)\s*{[^}]*if\s*\(\s*numbers\[i\]\s*>\s*max\s*\)/s);
+    results.push({
+      name: 'BUG 7',
+      passed: !!hasCorrectMax,
+      message: hasCorrectMax 
+        ? '\u2705 PASS - findMax() uses correct > comparison' 
+        : '\u274C FAIL - Change "numbers[i] < max" to "numbers[i] > max" in findMax()'
+    });
+
+    // BUG 8: getHistorySize should return history.size(), not history.size() + 1
+    const hasCorrectHistorySize = code.match(/public\s+int\s+getHistorySize\([^)]*\)\s*{[^}]*return\s+history\.size\(\)\s*;/s) && !code.match(/return\s+history\.size\(\)\s*\+\s*1/s);
+    results.push({
+      name: 'BUG 8',
+      passed: !!hasCorrectHistorySize,
+      message: hasCorrectHistorySize 
+        ? '\u2705 PASS - getHistorySize() returns correct history size' 
+        : '\u274C FAIL - Remove "+ 1" from getHistorySize() return statement'
+    });
+
+    return results;
+  }
+
+  // Handle combined selenium challenge with all 3 scenarios
+  if (language === 'selenium-combined') {
+    // === SCENARIO 1: Page Object Pattern ===
+    // Test 1: Check for WebDriverWait initialization
+    const hasWaitInit = code.includes('this.wait = new WebDriverWait') || code.includes('wait = new WebDriverWait');
+    results.push({
+      name: 'Scenario 1: Page Object Pattern - BUG 1',
+      passed: hasWaitInit,
+      message: hasWaitInit
+        ? '✅ PASS - WebDriverWait initialized in constructor'
+        : '❌ FAIL - WebDriverWait object not initialized in constructor'
+    });
+
+    // Test 2: Check for explicit wait in login method
+    const loginMethodMatch = code.match(/public void login\(.*?\{[\s\S]*?\n\s*\}/);
+    const loginMethodCode = loginMethodMatch ? loginMethodMatch[0] : '';
+    const hasDirectFind = loginMethodCode.includes('driver.findElement');
+    const hasWaitInLogin = loginMethodCode.includes('wait.until') && loginMethodCode.includes('elementToBeClickable');
+    results.push({
+      name: 'Scenario 1: Page Object Pattern - BUG 2',
+      passed: !hasDirectFind && hasWaitInLogin,
+      message: (!hasDirectFind && hasWaitInLogin)
+        ? '✅ PASS - Explicit waits added in login() method'
+        : '❌ FAIL - login() method needs explicit waits before element interactions'
+    });
+
+    // Test 3: Check for error message wait
+    const errorMethodMatch = code.match(/public String getErrorMessage\(.*?\{[\s\S]*?\n\s*\}/);
+    const errorMethodCode = errorMethodMatch ? errorMethodMatch[0] : '';
+    const hasDirectFindInError = errorMethodCode.includes('driver.findElement(errorMessage)');
+    const hasWaitInError = errorMethodCode.includes('wait.until') && (errorMethodCode.includes('visibilityOfElementLocated') || errorMethodCode.includes('presenceOfElementLocated'));
+    results.push({
+      name: 'Scenario 1: Page Object Pattern - BUG 3',
+      passed: !hasDirectFindInError && hasWaitInError,
+      message: (!hasDirectFindInError && hasWaitInError)
+        ? '✅ PASS - Error message wait condition added'
+        : '❌ FAIL - getErrorMessage() must wait for element visibility'
+    });
+
+    // === SCENARIO 2: Wait Conditions ===
+    const addProductMatch = code.match(/public void addProductToCart\([^)]*\)\s*\{([^}]*)\}/s);
+    const addProductContent = addProductMatch ? addProductMatch[1] : '';
+    
+    // Test 4: Check Thread.sleep removed
+    const hasThreadSleepInAdd = addProductContent.includes('Thread.sleep(');
+    results.push({
+      name: 'Scenario 2: Wait Conditions - BUG 1',
+      passed: !hasThreadSleepInAdd,
+      message: !hasThreadSleepInAdd
+        ? '✅ PASS - Thread.sleep replaced with proper waits'
+        : '❌ FAIL - Thread.sleep found - replace with explicit WebDriverWait'
+    });
+
+    // Test 5: Check for elementToBeClickable wait
+    const hasClickableInAdd = addProductContent.includes('elementToBeClickable');
+    results.push({
+      name: 'Scenario 2: Wait Conditions - BUG 2',
+      passed: hasClickableInAdd,
+      message: hasClickableInAdd
+        ? '✅ PASS - Using elementToBeClickable() before click'
+        : '❌ FAIL - addProductToCart() needs elementToBeClickable wait'
+    });
+
+    // Test 6: Check for cart text update wait
+    const isProductMatch = code.match(/public boolean isProductInCart\([^)]*\)\s*\{([^}]*)\}/s);
+    const isProductContent = isProductMatch ? isProductMatch[1] : '';
+    const hasTextWaitInCart = isProductContent.includes('textToBePresentInElement');
+    results.push({
+      name: 'Scenario 2: Wait Conditions - BUG 3',
+      passed: hasTextWaitInCart,
+      message: hasTextWaitInCart
+        ? '✅ PASS - Cart update wait condition added'
+        : '❌ FAIL - isProductInCart() needs textToBePresentInElement wait'
+    });
+
+    // Test 7: Check for badge presence wait
+    const getCountMatch = code.match(/public int getCartItemCount\([^)]*\)\s*\{([^}]*)\}/s);
+    const getCountContent = getCountMatch ? getCountMatch[1] : '';
+    const hasBadgeWaitInCount = getCountContent.includes('presenceOfElementLocated');
+    results.push({
+      name: 'Scenario 2: Wait Conditions - BUG 4',
+      passed: hasBadgeWaitInCount,
+      message: hasBadgeWaitInCount
+        ? '✅ PASS - Badge wait condition added'
+        : '❌ FAIL - getCartItemCount() needs presenceOfElementLocated wait'
+    });
+
+    // === SCENARIO 3: Locator Strategy ===
+    const fillFormMatch = code.match(/public void fillRegistrationForm\([^)]*\)[^{]*\{([\s\S]*?)\n\s*}\s*public/);
+    const fillFormContent = fillFormMatch ? fillFormMatch[1] : code;
+    
+    // Test 8: Check for absolute XPath removal
+    const hasAbsXPathInForm = fillFormContent.includes('/html/body/div[1]');
+    results.push({
+      name: 'Scenario 3: Locator Strategy - BUG 1',
+      passed: !hasAbsXPathInForm,
+      message: !hasAbsXPathInForm
+        ? '✅ PASS - Absolute XPath removed'
+        : '❌ FAIL - Replace absolute XPath with stable ID locator'
+    });
+
+    // Test 9: Check for index-based selectors
+    const hasIndexInForm = code.includes(':nth-child');
+    results.push({
+      name: 'Scenario 3: Locator Strategy - BUG 2',
+      passed: !hasIndexInForm,
+      message: !hasIndexInForm
+        ? '✅ PASS - Index-based selector removed'
+        : '❌ FAIL - Replace :nth-child selector with ID attribute'
+    });
+
+    // Test 10: Check for text-based XPath
+    const hasTextXPathInForm = code.includes('contains(text(),');
+    results.push({
+      name: 'Scenario 3: Locator Strategy - BUG 3',
+      passed: !hasTextXPathInForm,
+      message: !hasTextXPathInForm
+        ? '✅ PASS - Text-based XPath removed'
+        : '❌ FAIL - Replace contains(text(),) XPath with ID locator'
+    });
+
+    // Test 11: Check for linkText locator
+    const hasLinkTextInSubmit = code.includes('By.linkText');
+    results.push({
+      name: 'Scenario 3: Locator Strategy - BUG 4',
+      passed: !hasLinkTextInSubmit,
+      message: !hasLinkTextInSubmit
+        ? '✅ PASS - LinkText replaced with stable locator'
+        : '❌ FAIL - Replace By.linkText with button type selector'
+    });
+
+    return results;
+  }
+
+  // Legacy support for individual challenges
   switch (language) {
     case 'selenium-pageobject':
       // Test 1: Check for WebDriverWait initialization
@@ -275,20 +636,25 @@ io.on('connection', (socket) => {
     const sessionId = uuidv4();
     const problem = problems[problemTitle] || problems['Selenium Debugging'];
     
-    // Load the first debugging challenge by default
-    const defaultCode = `// DEBUGGING CHALLENGE: Page Object Pattern Bug
-// SCENARIO: Login page automation is failing intermittently
-// ISSUE: Tests fail with "Element not found" even though element exists
-// YOUR TASK: Fix the bug(s) in this Page Object implementation
+    // Load the Selenium Senior Automation Engineer challenge
+    const defaultCode = `// ═══════════════════════════════════════════════════════════════
+// NICE ACTIMIZE - SENIOR AUTOMATION ENGINEER TEST
+// Selenium WebDriver Debugging Challenge (7+ Years Experience)
+// Fix all 10 bugs across 3 real-world scenarios
+// Each bug is worth 1 point (Total: 10 points)
+// ═══════════════════════════════════════════════════════════════
 
-import org.openqa.selenium.By;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebElement;
-import org.openqa.selenium.support.ui.WebDriverWait;
-import org.openqa.selenium.support.ui.ExpectedConditions;
+
+import org.openqa.selenium.*;
+import org.openqa.selenium.support.ui.*;
 import java.time.Duration;
+import java.util.List;
 
-public class LoginPage {
+// ═══════════════════════════════════════════════════════════════
+// SCENARIO 1: Login & Authentication (3 bugs)
+// ═══════════════════════════════════════════════════════════════
+
+public class SecureLoginPage {
     private WebDriver driver;
     private WebDriverWait wait;
     
@@ -297,34 +663,123 @@ public class LoginPage {
     private By passwordField = By.id("password");
     private By loginButton = By.xpath("//button[@type='submit']");
     private By errorMessage = By.className("error-msg");
+    private By successMessage = By.id("welcome-msg");
     
-    public LoginPage(WebDriver driver) {
+    public SecureLoginPage(WebDriver driver) {
         this.driver = driver;
-        // BUG 1: Missing WebDriverWait initialization
+        // BUG 1: WebDriverWait not initialized - causes NullPointerException
     }
     
-    // BUG 2: This method doesn't wait for page to load
-    public void login(String username, String password) {
+    public void enterCredentials(String username, String password) {
+        // BUG 2: Direct findElement without wait - fails on slow networks
         driver.findElement(usernameField).sendKeys(username);
         driver.findElement(passwordField).sendKeys(password);
+    }
+    
+    public void clickLogin() {
         driver.findElement(loginButton).click();
     }
     
-    // BUG 3: No wait condition for error message
     public String getErrorMessage() {
+        // BUG 3: No explicit wait for error message visibility
         return driver.findElement(errorMessage).getText();
     }
     
-    public boolean isLoginButtonDisplayed() {
-        return driver.findElement(loginButton).isDisplayed();
+    public boolean isLoginSuccessful() {
+        return wait.until(ExpectedConditions.visibilityOfElementLocated(successMessage)).isDisplayed();
     }
 }
 
-// EXPECTED FIX:
-// 1. Initialize WebDriverWait in constructor
-// 2. Add explicit waits in login() method
-// 3. Use ExpectedConditions.elementToBeClickable()
-// 4. Add wait for error message visibility`;
+// ═══════════════════════════════════════════════════════════════
+// SCENARIO 2: Dynamic Content & Synchronization (4 bugs)
+// ═══════════════════════════════════════════════════════════════
+
+public class DynamicDashboard {
+    private WebDriver driver;
+    private WebDriverWait wait;
+    
+    public DynamicDashboard(WebDriver driver) {
+        this.driver = driver;
+        this.wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+    }
+    
+    public void loadUserProfile(String userId) {
+        driver.get("https://app.example.com/profile/" + userId);
+        
+        // BUG 4: Using Thread.sleep instead of explicit wait
+        try {
+            Thread.sleep(3000);  // BAD PRACTICE!
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+    
+    public void clickEditButton() {
+        // BUG 5: Not waiting for element to be clickable
+        WebElement editBtn = driver.findElement(By.id("edit-profile-btn"));
+        editBtn.click();
+    }
+    
+    public boolean isDataLoaded() {
+        // BUG 6: Missing wait for AJAX call completion
+        WebElement dataTable = driver.findElement(By.id("profile-data"));
+        return dataTable.isDisplayed();
+    }
+    
+    public int getNotificationCount() {
+        // BUG 7: Element might not be present in DOM yet
+        WebElement badge = driver.findElement(By.className("notification-badge"));
+        return Integer.parseInt(badge.getText());
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// SCENARIO 3: Complex Form Handling (3 bugs)
+// ═══════════════════════════════════════════════════════════════
+
+public class RegistrationForm {
+    private WebDriver driver;
+    private WebDriverWait wait;
+    
+    public RegistrationForm(WebDriver driver) {
+        this.driver = driver;
+        this.wait = new WebDriverWait(driver, Duration.ofSeconds(15));
+    }
+    
+    public void fillUserDetails(String name, String email, String phone) {
+        // BUG 8: Fragile absolute XPath - breaks when UI structure changes
+        WebElement nameField = driver.findElement(
+            By.xpath("/html/body/div[1]/div[2]/form/div[1]/input")
+        );
+        nameField.sendKeys(name);
+        
+        // BUG 9: Index-based CSS selector - unreliable
+        WebElement emailField = driver.findElement(
+            By.cssSelector("input:nth-child(2)")
+        );
+        emailField.sendKeys(email);
+        
+        // Use stable locator for phone (CORRECT)
+        driver.findElement(By.id("phone")).sendKeys(phone);
+    }
+    
+    public void selectCountry(String country) {
+        Select countryDropdown = new Select(driver.findElement(By.id("country")));
+        countryDropdown.selectByVisibleText(country);
+    }
+    
+    public void submitForm() {
+        // BUG 10: Using link text that's locale-dependent
+        WebElement submitBtn = driver.findElement(
+            By.linkText("Submit Registration")
+        );
+        submitBtn.click();
+    }
+    
+    public boolean isRegistrationSuccessful() {
+        return wait.until(ExpectedConditions.urlContains("/success"));
+    }
+}`;
     
     const session: InterviewSession = {
       id: sessionId,
@@ -332,7 +787,7 @@ public class LoginPage {
       problem: problemTitle,
       problemDescription: problem.description,
       code: defaultCode,
-      language: 'selenium-pageobject',
+      language: 'selenium-senior',
       status: 'waiting',
       createdAt: new Date(),
     };
@@ -465,35 +920,124 @@ public class LoginPage {
       let output = '';
       let success = true;
 
-      // Debugging Test Scenarios for Automation Engineer Interview
-      // Analyze the code and provide test results based on bug fixes
-      
-      output += `🧪 Running Test Suite for ${language}...\\n`;
-      output += `${'='.repeat(60)}\\n\\n`;
-
-      // Check if code contains bug fixes
+      // Analyze the code and provide test results
       const testResults = analyzeDebugFixes(code, language);
       
       console.log('Test results:', testResults.map(t => `${t.name}: ${t.passed ? 'PASS' : 'FAIL'}`));
       
-      testResults.forEach((test, index) => {
-        output += `Test ${index + 1}: ${test.name}\n`;
-        output += `${test.message}\n\n`;
-      });
+      // Display results based on challenge type
+      if (language === 'selenium-senior') {
+        output += `╔═══════════════════════════════════════════════════════════════╗\n`;
+        output += `║     NICE ACTIMIZE - SENIOR AUTOMATION ENGINEER TEST          ║\n`;
+        output += `║          Selenium WebDriver Debugging Challenge              ║\n`;
+        output += `╚═══════════════════════════════════════════════════════════════╝\n\n`;
+        
+        const scenario1 = testResults.slice(0, 3);
+        const scenario2 = testResults.slice(3, 7);
+        const scenario3 = testResults.slice(7, 10);
+
+        // Scenario 1
+        output += `┌─────────────────────────────────────────────────────────────┐\n`;
+        output += `│ 📋 SCENARIO 1: Login & Authentication (3 bugs)             │\n`;
+        output += `└─────────────────────────────────────────────────────────────┘\n\n`;
+        scenario1.forEach((test, index) => {
+          const icon = test.passed ? '✅' : '❌';
+          const status = test.passed ? 'PASS' : 'FAIL';
+          const points = test.passed ? '1.0' : '0.0';
+          output += `  ${icon} ${test.name}: ${status} [${points} point]\n`;
+          output += `     ${test.message}\n\n`;
+        });
+
+        // Scenario 2
+        output += `┌─────────────────────────────────────────────────────────────┐\n`;
+        output += `│ 📋 SCENARIO 2: Dynamic Content & Synchronization (4 bugs)  │\n`;
+        output += `└─────────────────────────────────────────────────────────────┘\n\n`;
+        scenario2.forEach((test, index) => {
+          const icon = test.passed ? '✅' : '❌';
+          const status = test.passed ? 'PASS' : 'FAIL';
+          const points = test.passed ? '1.0' : '0.0';
+          output += `  ${icon} ${test.name}: ${status} [${points} point]\n`;
+          output += `     ${test.message}\n\n`;
+        });
+
+        // Scenario 3
+        output += `┌─────────────────────────────────────────────────────────────┐\n`;
+        output += `│ 📋 SCENARIO 3: Complex Form Handling (3 bugs)              │\n`;
+        output += `└─────────────────────────────────────────────────────────────┘\n\n`;
+        scenario3.forEach((test, index) => {
+          const icon = test.passed ? '✅' : '❌';
+          const status = test.passed ? 'PASS' : 'FAIL';
+          const points = test.passed ? '1.0' : '0.0';
+          output += `  ${icon} ${test.name}: ${status} [${points} point]\n`;
+          output += `     ${test.message}\n\n`;
+        });
+      } else if (language === 'java-calculator') {
+        const scenario1 = testResults.slice(0, 3);
+        const scenario2 = testResults.slice(3, 7);
+        const scenario3 = testResults.slice(7, 11);
+
+        // Scenario 1
+        output += `📋 Scenario 1: Page Object Pattern (3 bugs)\\n`;
+        output += `${'─'.repeat(60)}\\n`;
+        scenario1.forEach((test, index) => {
+          const icon = test.passed ? '✓' : '✗';
+          output += `  BUG ${index + 1}: ${icon} ${test.passed ? 'PASS' : 'FAIL'}\\n`;
+          output += `    ${test.message}\\n\\n`;
+        });
+
+        // Scenario 2
+        output += `📋 Scenario 2: Wait Conditions (4 bugs)\\n`;
+        output += `${'─'.repeat(60)}\\n`;
+        scenario2.forEach((test, index) => {
+          const icon = test.passed ? '✓' : '✗';
+          output += `  BUG ${index + 1}: ${icon} ${test.passed ? 'PASS' : 'FAIL'}\\n`;
+          output += `    ${test.message}\\n\\n`;
+        });
+
+        // Scenario 3
+        output += `📋 Scenario 3: Locator Strategy (4 bugs)\\n`;
+        output += `${'─'.repeat(60)}\\n`;
+        scenario3.forEach((test, index) => {
+          const icon = test.passed ? '✓' : '✗';
+          output += `  BUG ${index + 1}: ${icon} ${test.passed ? 'PASS' : 'FAIL'}\\n`;
+          output += `    ${test.message}\\n\\n`;
+        });
+      } else {
+        // Legacy format for individual challenges
+        testResults.forEach((test, index) => {
+          output += `Test ${index + 1}: ${test.name}\n`;
+          output += `${test.message}\n\n`;
+        });
+      }
 
       const passedTests = testResults.filter(t => t.passed).length;
       const totalTests = testResults.length;
+      const totalPoints = passedTests * 1.0;
       
-      output += `${'='.repeat(60)}\n`;
-      output += `📊 Test Summary: ${passedTests}/${totalTests} tests passed\n`;
+      output += `\n╔═══════════════════════════════════════════════════════════════╗\n`;
+      output += `║                        TEST SUMMARY                           ║\n`;
+      output += `╠═══════════════════════════════════════════════════════════════╣\n`;
+      output += `║  Bugs Fixed: ${passedTests}/${totalTests}                                              ║\n`;
+      output += `║  Score: ${totalPoints.toFixed(1)}/10.0 points                                    ║\n`;
       
       if (passedTests === totalTests) {
-        output += `\n🎉 All tests passed! Great job fixing the bugs!\n`;
+        output += `║                                                               ║\n`;
+        output += `║  🎉 EXCELLENT! All bugs fixed!                               ║\n`;
+        output += `║  You've demonstrated expert Selenium knowledge!              ║\n`;
         success = true;
+      } else if (passedTests >= 7) {
+        output += `║                                                               ║\n`;
+        output += `║  ✨ GOOD JOB! ${totalTests - passedTests} bug(s) remaining.                           ║\n`;
+        output += `║  Review the failed tests and try again!                      ║\n`;
+        success = false;
       } else {
-        output += `\n⚠️  Some tests failed. Review the bugs and try again.\n`;
+        output += `║                                                               ║\n`;
+        output += `║  ⚠️  ${totalTests - passedTests} bug(s) remaining. Keep debugging!                   ║\n`;
+        output += `║  Focus on explicit waits and stable locators.                ║\n`;
         success = false;
       }
+      
+      output += `╚═══════════════════════════════════════════════════════════════╝\n`;
 
       socket.emit('execution-result', {
         sessionId,

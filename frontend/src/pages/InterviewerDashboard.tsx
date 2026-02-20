@@ -43,12 +43,18 @@ function InterviewerDashboard() {
   const [forceUpdateCounter, setForceUpdateCounter] = useState(0); // Force re-render when tab becomes active
 
   useEffect(() => {
-    const newSocket = io(import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000');
+    const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+    console.log('🔌 Connecting to backend:', backendUrl);
+    const newSocket = io(backendUrl);
     setSocket(newSocket);
 
     newSocket.on('connect', () => {
-      console.log('Connected to server');
+      console.log('✅ Connected to server');
       newSocket.emit('get-sessions');
+    });
+
+    newSocket.on('connect_error', (error) => {
+      console.error('❌ Connection error:', error);
     });
 
     newSocket.on('sessions-list', (sessionsList: InterviewSession[]) => {
